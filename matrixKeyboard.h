@@ -14,7 +14,7 @@
 #define key3 0b11101011
 #define keyA 0b11100111
 
-#define key4 0b11101110
+#define key4 0b11011110
 #define key5 0b11011101
 #define key6 0b11011011
 #define keyB 0b11010111

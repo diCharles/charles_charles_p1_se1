@@ -44,27 +44,42 @@
  * @brief   Application entry point.
  */
 #define  passwordLenght 4
-const uint8_t password[passwordLenght]= {keyA,keyB,keyB,keyA};
-uint8_t checkPassword(uint8_t passwordLength, uint8_t * password);
+ uint8_t password[passwordLenght]= {key1,key2,key3,key4};
+uint8_t checkPassword( uint8_t passwordLength, uint8_t  *  password);
+static g_last_key_seen =0;
+
 int main(void) {
   	/* Init board hardware. */
 	init_keyboard();
 	init_rgb();
 
+	uint8_t key=0;
     /* Enter an infinite loop, just incrementing a counter. */
     while(1) {
-		while(0 ==checkPassword(passwordLenght,password));
+		//while(0 ==checkPassword(passwordLenght,password));
 		//check in succesfull!!!!!
-		rgb_color(GREEN,TOOGLE);
+    	key=read_keyboard();
+    	if(0 != key)
+    	{
+    		g_last_key_seen=key;
+
+    	}
+    	if( 1 == checkPassword(passwordLenght,password))
+    	{
+    		rgb_color(YELLOW,TOOGLE);
+    	}
+
+
 
     }
     return 0 ;
 }
-uint8_t checkPassword(uint8_t passwordLength, uint8_t * password)//non bloquing check password
+uint8_t checkPassword(uint8_t passwordLength, uint8_t *  password)//non bloquing check password
 {
 	uint8_t static strokeCounter=0;
 	uint8_t static userCorrectKeyCntr=0;
-	uint8_t keyStroke=read_keyboard();
+	uint8_t keyStroke=g_last_key_seen;
+	g_last_key_seen=0;
 	if(0 == keyStroke)//if no key is being pressed
 	{
 		return 0;

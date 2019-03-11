@@ -36,13 +36,14 @@
 
 typedef struct
 {
-	int8_t out;
+
+	uint8_t previousKey;
 	void (*fptr_set_cols) (uint8_t value);
 	uint8_t (*fptr_read_rows)(void);//
 	uint8_t (*fptr_calculate_key)(uint8_t cols, uint8_t rows);
 
-}key_machine_states_t;
-const  key_machine_states_t keyboard_machine[4]={   {0,set_columns_value,read_rows,calculate_key},
+}g_key_machine_states_t;
+ g_key_machine_states_t keyboard_machine[4]={   {0,set_columns_value,read_rows,calculate_key},
 													{0,set_columns_value,read_rows,calculate_key},
 													{0,set_columns_value,read_rows,calculate_key},
 													{0,set_columns_value,read_rows,calculate_key}
@@ -62,29 +63,72 @@ uint8_t read_keyboard()
 	uint8_t read=keyboard_machine[0].fptr_calculate_key(col1,rows_value);
 	if(0b1111 !=rows_value)
 	{
-		return read;
+		if( read!=keyboard_machine[0].previousKey)
+		{
+			keyboard_machine[0].previousKey=read;
+			return read;
+		}
+		else
+		{
+
+			return 0;
+		}
 	}
+	keyboard_machine[0].previousKey=0;
+
 	keyboard_machine[1].fptr_set_cols(col2);
-	 rows_value =keyboard_machine[1].fptr_read_rows();
-	 read=keyboard_machine[1].fptr_calculate_key(col2,rows_value);
+	rows_value =keyboard_machine[1].fptr_read_rows();
+	read=keyboard_machine[1].fptr_calculate_key(col2,rows_value);
 	if(0b1111 !=rows_value)
 	{
-		return read;
+		if( read!=keyboard_machine[1].previousKey)
+		{
+			keyboard_machine[1].previousKey=read;
+			return read;
+		}
+		else
+		{
+
+			return 0;
+		}
 	}
+	keyboard_machine[1].previousKey=0;
+
 	keyboard_machine[2].fptr_set_cols(col3);
 	rows_value =keyboard_machine[2].fptr_read_rows();
 	read=keyboard_machine[2].fptr_calculate_key(col3,rows_value);
 	if(0b1111 !=rows_value)
 	{
-		return read;
+		if( read!=keyboard_machine[2].previousKey)
+		{
+			keyboard_machine[2].previousKey=read;
+			return read;
+		}
+		else
+		{
+
+			return 0;
+		}
 	}
+	keyboard_machine[2].previousKey=0;
+
 	keyboard_machine[3].fptr_set_cols(col4);
 	rows_value =keyboard_machine[3].fptr_read_rows();
 	read=keyboard_machine[3].fptr_calculate_key(col4,rows_value);
 	if(0b1111 !=rows_value)
 	{
-		return read;
+		if( read!=keyboard_machine[3].previousKey)
+		{
+			keyboard_machine[3].previousKey=read;
+			return read;
+		}
+		else
+		{
+
+			return 0;
+		}
 	}
+	keyboard_machine[3].previousKey=0;
 
 	return 0;
 
