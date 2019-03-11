@@ -35,6 +35,7 @@
 
 #include "MK64F12.h"
 #include "matrixKeyboard.h"
+#include "rgb.h"
 /* TODO: insert other include files here. */
 
 /* TODO: insert other definitions and declarations here. */
@@ -42,15 +43,54 @@
 /*
  * @brief   Application entry point.
  */
+#define  passwordLenght 4
+const uint8_t password[passwordLenght]= {keyA,keyB,keyB,keyA};
+uint8_t checkPassword(uint8_t passwordLength, uint8_t * password);
 int main(void) {
   	/* Init board hardware. */
 	init_keyboard();
-	uint8_t key_1;
+	init_rgb();
+
     /* Enter an infinite loop, just incrementing a counter. */
     while(1) {
-    	key_1 =read_keyboard();
-    	read_keyboard();
+		while(0 ==checkPassword(passwordLenght,password));
+		//check in succesfull!!!!!
+		rgb_color(GREEN,TOOGLE);
 
     }
     return 0 ;
+}
+uint8_t checkPassword(uint8_t passwordLength, uint8_t * password)//non bloquing check password
+{
+	uint8_t static strokeCounter=0;
+	uint8_t static userCorrectKeyCntr=0;
+	uint8_t keyStroke=read_keyboard();
+	if(0 == keyStroke)//if no key is being pressed
+	{
+		return 0;
+	}
+
+	if( password[strokeCounter] == keyStroke)
+	{
+		userCorrectKeyCntr++;
+		strokeCounter++;
+		if(strokeCounter == passwordLenght)
+		{
+			strokeCounter=0; //enables for a new try
+			userCorrectKeyCntr=0;
+			return 1;
+		}
+		else
+		{
+
+			return 0;
+		}
+	}
+	else
+	{
+		strokeCounter=0; //enables for a new try
+		userCorrectKeyCntr=0;
+	}
+	return 0 ;
+
 }

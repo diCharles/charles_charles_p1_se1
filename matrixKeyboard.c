@@ -27,25 +27,7 @@
 #define row_4 3
 
 #define noKEYread 0b0
-#define key1 0b11101110
-#define key2 0b11101101
-#define key3 0b11101011
-#define keyA 0b11100111
 
-#define key4 0b11101110
-#define key5 0b11011101
-#define key6 0b11011011
-#define keyB 0b11010111
-
-#define key7 0b10111110
-#define key8 0b10111101
-#define key9 0b10111011
-#define keyC 0b10110111
-
-#define keyAst 0b01111110
-#define key0 0b01111101
-#define keyHash 0b01111011
-#define keyD 0b01110111
 
 #define col1 0b1110
 #define col2 0b1101
@@ -57,25 +39,13 @@ typedef struct
 	int8_t out;
 	void (*fptr_set_cols) (uint8_t value);
 	uint8_t (*fptr_read_rows)(void);//
+	uint8_t (*fptr_calculate_key)(uint8_t cols, uint8_t rows);
 
 }key_machine_states_t;
-const  key_machine_states_t keyboard_machine[17]={{-1,set_columns_value,read_rows},
-		{0x0,set_columns_value,read_rows},
-		{0x1,set_columns_value,read_rows},
-		{0x2,set_columns_value,read_rows},
-		{0x3,set_columns_value,read_rows},
-		{0x4,set_columns_value,read_rows},
-		{0x5,set_columns_value,read_rows},
-		{0x6,set_columns_value,read_rows},
-		{0x7,set_columns_value,read_rows},
-		{0x8,set_columns_value,read_rows},
-		{0x9,set_columns_value,read_rows},
-		{0xA,set_columns_value,read_rows},
-		{0xB,set_columns_value,read_rows},
-		{0xC,set_columns_value,read_rows},
-		{0xD,set_columns_value,read_rows},
-		{0xE,set_columns_value,read_rows},
-		{0xF,set_columns_value,read_rows}
+const  key_machine_states_t keyboard_machine[4]={   {0,set_columns_value,read_rows,calculate_key},
+													{0,set_columns_value,read_rows,calculate_key},
+													{0,set_columns_value,read_rows,calculate_key},
+													{0,set_columns_value,read_rows,calculate_key}
 
 };
 void init_keyboard()
@@ -87,34 +57,30 @@ void init_keyboard()
 }
 uint8_t read_keyboard()
 {
-	uint8_t colsValue=0b1110;
-	set_columns_value(colsValue);
-	uint8_t rows_value =read_rows();
-	uint8_t read=calculate_key(colsValue,rows_value);
+	keyboard_machine[0].fptr_set_cols(col1);
+	uint8_t rows_value =keyboard_machine[0].fptr_read_rows();
+	uint8_t read=keyboard_machine[0].fptr_calculate_key(col1,rows_value);
 	if(0b1111 !=rows_value)
 	{
 		return read;
 	}
-	colsValue=0b1101;
-	set_columns_value(colsValue);
-	rows_value =read_rows();
-	read=calculate_key(colsValue,rows_value);
+	keyboard_machine[1].fptr_set_cols(col2);
+	 rows_value =keyboard_machine[1].fptr_read_rows();
+	 read=keyboard_machine[1].fptr_calculate_key(col2,rows_value);
 	if(0b1111 !=rows_value)
 	{
 		return read;
 	}
-	colsValue=0b1011;
-	set_columns_value(colsValue);
-	rows_value =read_rows();
-	read=calculate_key(colsValue,rows_value);
+	keyboard_machine[2].fptr_set_cols(col3);
+	rows_value =keyboard_machine[2].fptr_read_rows();
+	read=keyboard_machine[2].fptr_calculate_key(col3,rows_value);
 	if(0b1111 !=rows_value)
 	{
 		return read;
 	}
-	colsValue=0b0111;
-	set_columns_value(colsValue);
-	rows_value =read_rows();
-	read=calculate_key(colsValue,rows_value);
+	keyboard_machine[3].fptr_set_cols(col4);
+	rows_value =keyboard_machine[3].fptr_read_rows();
+	read=keyboard_machine[3].fptr_calculate_key(col4,rows_value);
 	if(0b1111 !=rows_value)
 	{
 		return read;
