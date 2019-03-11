@@ -35,4 +35,5 @@ uint8_t read_keyboard();
  void set_columns_value(uint8_t value);
  uint8_t read_rows();
  uint8_t calculate_key(uint8_t cols, uint8_t rows);
+ uint8_t checkPassword(uint8_t passwordLength, uint8_t *  password);//non bloquing check password
 #endif /* MATRIXKEYBOARD_H_ */
