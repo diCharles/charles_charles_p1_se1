@@ -28,12 +28,25 @@
 #define key0 0b01111101
 #define keyHash 0b01111011
 #define keyD 0b01110111
-
+#define supportedPasswords 4
 void init_keyboard();
 uint8_t read_keyboard();
  void init_keyboard_pins();
  void set_columns_value(uint8_t value);
  uint8_t read_rows();
  uint8_t calculate_key(uint8_t cols, uint8_t rows);
- uint8_t checkPassword(uint8_t passwordLength, uint8_t *  password);//non bloquing check password
+
+ /*
+  * DESCRPICION DE LA FUNCION checkPassword
+  *  param[in]: password legth, longitud de keys del password
+  *  param[in]: password apuntador al password, tipicamente se pasa el arreglo por valor
+  *  param[in]: passwordNumber hay 4 passwords soportados por la función, hay que indicarle a esta cual revisará
+  *
+  *  param[out]: 1 si el password ingresado es correcto, 0 si aun no se ha terminado de ingresar o si este es erroneo
+  *
+  *  Nota 1: la funcion checkpassword requiere de llamar primero a la la función read keyboard, antes de cada llamada a esta
+  *  		para adquirir un nuevo key a revisar
+  *  Nota 2:
+  *  */
+ uint8_t checkPassword(uint8_t passwordLength, uint8_t *  password,uint8_t PasswordNumber);//non bloquing check password
 #endif /* MATRIXKEYBOARD_H_ */

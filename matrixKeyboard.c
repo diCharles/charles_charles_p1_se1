@@ -278,25 +278,27 @@ uint8_t read_rows()
 	}
 	return allRowsValue;
 }
-uint8_t checkPassword(uint8_t passwordLength, uint8_t *  password)//non bloquing check password
+uint8_t checkPassword(uint8_t passwordLength, uint8_t *  password,uint8_t PasswordNumber)//non bloquing check password
 {
-	uint8_t static strokeCounter=0;
-	uint8_t static userCorrectKeyCntr=0;
+	static uint8_t  strokeCounter[supportedPasswords]={0,0,0,0};
+	static uint8_t  userCorrectKeyCntr[ supportedPasswords]={0,0,0,0};
 	uint8_t keyStroke=g_last_key_seen;
-	g_last_key_seen=0;
+
 	if(0 == keyStroke)//if no key is being pressed
 	{
 		return 0;
 	}
 
-	if( password[strokeCounter] == keyStroke)
+	uint8_t index=strokeCounter[PasswordNumber];
+	if( password[index] == keyStroke)
 	{
-		userCorrectKeyCntr++;
-		strokeCounter++;
-		if(strokeCounter == passwordLength)
+		g_last_key_seen=0;
+		userCorrectKeyCntr[ PasswordNumber]=userCorrectKeyCntr[ PasswordNumber]+1;
+		strokeCounter[ PasswordNumber]=strokeCounter[ PasswordNumber]+1;
+		if(strokeCounter[PasswordNumber] == passwordLength)
 		{
-			strokeCounter=0; //enables for a new try
-			userCorrectKeyCntr=0;
+			strokeCounter[ PasswordNumber]=0; //enables for a new try
+			userCorrectKeyCntr[ PasswordNumber]=0;
 			return 1;
 		}
 		else
@@ -307,8 +309,8 @@ uint8_t checkPassword(uint8_t passwordLength, uint8_t *  password)//non bloquing
 	}
 	else
 	{
-		strokeCounter=0; //enables for a new try
-		userCorrectKeyCntr=0;
+		strokeCounter[ PasswordNumber]=0; //enables for a new try
+		userCorrectKeyCntr[ PasswordNumber]=0;
 	}
 	return 0 ;
 

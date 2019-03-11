@@ -54,11 +54,20 @@ int main(void) {
     while(1) {
 
     	read_keyboard();
-    	if( 1 == checkPassword(largoDeClaves,claveMaestra))
+    	if( 1 == checkPassword(largoDeClaves,claveMaestra,0))
     	{
-    		rgb_color(YELLOW,TOOGLE);
+    		rgb_color(RED,TOOGLE);
     	}
-
+    	read_keyboard();
+    	if( 1 == checkPassword(largoDeClaves,claveControlMotor,1))
+    	{
+    		rgb_color(GREEN,TOOGLE);
+    	}
+    	read_keyboard();
+    	if( 1 == checkPassword(largoDeClaves,claveGeneradorDeSenial,2))
+    	{
+    		rgb_color(BLUE,TOOGLE);
+    	}
 
 
     }
