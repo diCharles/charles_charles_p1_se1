@@ -1,76 +1,86 @@
-/*
- * Copyright 2016-2018 NXP
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * o Redistributions of source code must retain the above copyright notice, this list
- *   of conditions and the following disclaimer.
- *
- * o Redistributions in binary form must reproduce the above copyright notice, this
- *   list of conditions and the following disclaimer in the documentation and/or
- *   other materials provided with the distribution.
- *
- * o Neither the name of NXP Semiconductor, Inc. nor the names of its
- *   contributors may be used to endorse or promote products derived from this
- *   software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
- 
+
+
 /**
  * @file    teclado_matricial_4x4.c
  * @brief   Application entry point.
+ *
+ * This small program utilizes matricial keyboard
+ * and reads his values on pit_0 timer interrupt,
+ * it also reads passwords and enables flags when
+ * the passwords ingresed by the user are correct
  */
 
 #include "MK64F12.h"
 #include "matrixKeyboard.h"
 #include "rgb.h"
+#include "PIT.h"
 
 #define  largoDeClaves   4//sus unidades son numero de keys
 
- uint8_t claveMaestra[largoDeClaves]= 			{key1,key2,key3,key4};
- uint8_t claveControlMotor[largoDeClaves]=  	{key4,key5,key6,key7};
- uint8_t claveGeneradorDeSenial[largoDeClaves]= {key7,key8,key9,key0};
+uint8_t claveMaestra[largoDeClaves]= 			{key1,key2,key3,key4};
+uint8_t claveControlMotor[largoDeClaves]=  	{key4,key5,key6,key7};
+uint8_t claveGeneradorDeSenial[largoDeClaves]= {key7,key8,key9,key0};
 
+#define SYSTEM_CLOCK (21000000U)
+#define DELAY_PIT_1 (0.0001F)
+#define ENABLED_ 		1
+#define DISABLED_		 0
+
+/* function check password can onlyy check 4  diferennt passwords, password 4 is not defined yet*/
+#define password_No0 0 /* asigned for claveMaestra*/
+#define password_No1 1 /*asigned for controlMotor*/
+#define password_No2 2/*asigned for generador de senial*/
+#define passwordNo4  3/* user  free asignation*/
+
+/* global status flags for system , by default all characteristics are disabled*/
+uint8_t g_system_status=DISABLED_;
+uint8_t g_motor_status =DISABLED_;
+uint8_t g_SgnalGenerator_status=DISABLED_;
 
 int main(void) {
-  	/* Init board hardware. */
+	/* Init matricial keyboard pins (rosws and cols). */
 	init_keyboard();
+	/* the rgb led on the board is set to show colors*/
 	init_rgb();
+	/*the  pit0 is enabled, on his interrupt is going to check the keyboard and passwords for the system*/
+	set_PIT_timer_with_interrupt(PIT_1,SYSTEM_CLOCK , DELAY_PIT_1,
+			PIT_CH1_IRQ, PRIORITY_11);
+	uint8_t pit_inter_status = FALSE;
+	/* the passwords are checked on the pit0 ISR each 9 ms approximately*/
+	uint8_t readValue=0;
+
+	while(1) {
+
+		pit_inter_status= PIT_get_interrupt_flag_status(PIT_1);
+		if(1 == pit_inter_status)
+		{
+
+			PIT_clear_interrupt_flag(PIT_1);
+			/*if the passwords are correct the correspondig status flags for the system are enabled, the set
+					 * of this flags is done in the pit1 ISR*/
+				 	 readValue=read_keyboard();
 
 
-    /* Enter an infinite loop, just incrementing a counter. */
-    while(1) {
+					if( 1 == checkPassword(largoDeClaves,claveMaestra,password_No0,readValue))
+					{
+						rgb_color(RED,TOOGLE);
+					}
 
-    	read_keyboard();
-    	if( 1 == checkPassword(largoDeClaves,claveMaestra,0))
-    	{
-    		rgb_color(RED,TOOGLE);
-    	}
-    	read_keyboard();
-    	if( 1 == checkPassword(largoDeClaves,claveControlMotor,1))
-    	{
-    		rgb_color(GREEN,TOOGLE);
-    	}
-    	read_keyboard();
-    	if( 1 == checkPassword(largoDeClaves,claveGeneradorDeSenial,2))
-    	{
-    		rgb_color(BLUE,TOOGLE);
-    	}
+					if( 1 == checkPassword(largoDeClaves,claveControlMotor,password_No1,readValue))
+					{
+						rgb_color(GREEN,TOOGLE);
+					}
+
+					if( 1 == checkPassword(largoDeClaves,claveGeneradorDeSenial,password_No2,readValue))
+					{
+						rgb_color(BLUE,TOOGLE);
+					}
+					/*reading pit1 interrupt flag set on his ISR*/
+
+		}
 
 
-    }
-    return 0 ;
+	}
+	return 0 ;
 }
 

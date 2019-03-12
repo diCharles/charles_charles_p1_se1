@@ -34,7 +34,7 @@
 #define col3 0b1011
 #define col4 0b0111
 
-static uint8_t g_last_key_seen =0;
+
 
 typedef struct
 {
@@ -278,21 +278,22 @@ uint8_t read_rows()
 	}
 	return allRowsValue;
 }
-uint8_t checkPassword(uint8_t passwordLength, uint8_t *  password,uint8_t PasswordNumber)//non bloquing check password
+uint8_t checkPassword(uint8_t passwordLength, uint8_t *  password,uint8_t PasswordNumber,uint8_t inputKey)//non bloquing check password
 {
 	static uint8_t  strokeCounter[supportedPasswords]={0,0,0,0};
 	static uint8_t  userCorrectKeyCntr[ supportedPasswords]={0,0,0,0};
-	uint8_t keyStroke=g_last_key_seen;
+	static uint8_t keyStroke[supportedPasswords]={0,0,0,0};
 
-	if(0 == keyStroke)//if no key is being pressed
+
+	if(0 == inputKey)//if no key is being pressed
 	{
 		return 0;
 	}
-
+	 keyStroke[PasswordNumber]=inputKey;
 	uint8_t index=strokeCounter[PasswordNumber];
-	if( password[index] == keyStroke)
+	if( password[index] == keyStroke[PasswordNumber])
 	{
-		g_last_key_seen=0;
+		keyStroke[PasswordNumber]=0;
 		userCorrectKeyCntr[ PasswordNumber]=userCorrectKeyCntr[ PasswordNumber]+1;
 		strokeCounter[ PasswordNumber]=strokeCounter[ PasswordNumber]+1;
 		if(strokeCounter[PasswordNumber] == passwordLength)

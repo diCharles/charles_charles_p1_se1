@@ -29,6 +29,9 @@
 #define keyHash 0b01111011
 #define keyD 0b01110111
 #define supportedPasswords 4
+
+static uint8_t g_last_key_seen =0;
+
 void init_keyboard();
 uint8_t read_keyboard();
  void init_keyboard_pins();
@@ -48,5 +51,5 @@ uint8_t read_keyboard();
   *  		para adquirir un nuevo key a revisar
   *  Nota 2:
   *  */
- uint8_t checkPassword(uint8_t passwordLength, uint8_t *  password,uint8_t PasswordNumber);//non bloquing check password
+ uint8_t checkPassword(uint8_t passwordLength, uint8_t *  password,uint8_t PasswordNumber,uint8_t inputKey);//non bloquing check password
 #endif /* MATRIXKEYBOARD_H_ */
