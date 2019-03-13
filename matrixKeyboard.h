@@ -31,6 +31,14 @@
 #define supportedPasswords 4
 
 static uint8_t g_last_key_seen =0;
+/* function check password can onlyy check 4  diferennt passwords, password 4 is not defined yet*/
+#define password_No0 0 /* asigned for claveMaestra*/
+#define password_No1 1 /*asigned for controlMotor*/
+#define password_No2 2/*asigned for generador de senial*/
+#define passwordNo4  3/* user  free asignation*/
+
+/* global status flags for system , by default all characteristics are disabled*/
+
 
 void init_keyboard();
 uint8_t read_keyboard();
@@ -52,4 +60,12 @@ uint8_t read_keyboard();
   *  Nota 2:
   *  */
  uint8_t checkPassword(uint8_t passwordLength, uint8_t *  password,uint8_t PasswordNumber,uint8_t inputKey);//non bloquing check password
+
+ /*
+  * Brief: this function checks three passwords with the function checkpassword
+  * param[in] : pointers to access status for each password
+  *
+  * */
+ void check3Passwords( uint8_t *loggin1,uint8_t *logging2,uint8_t *loggin3);
+
 #endif /* MATRIXKEYBOARD_H_ */

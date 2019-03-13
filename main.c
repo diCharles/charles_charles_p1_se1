@@ -26,16 +26,7 @@ uint8_t claveGeneradorDeSenial[largoDeClaves]= {key7,key8,key9,key0};
 #define ENABLED_ 		1
 #define DISABLED_		 0
 
-/* function check password can onlyy check 4  diferennt passwords, password 4 is not defined yet*/
-#define password_No0 0 /* asigned for claveMaestra*/
-#define password_No1 1 /*asigned for controlMotor*/
-#define password_No2 2/*asigned for generador de senial*/
-#define passwordNo4  3/* user  free asignation*/
 
-/* global status flags for system , by default all characteristics are disabled*/
-uint8_t g_system_status=DISABLED_;
-uint8_t g_motor_status =DISABLED_;
-uint8_t g_SgnalGenerator_status=DISABLED_;
 
 int main(void) {
 	/* Init matricial keyboard pins (rosws and cols). */
@@ -54,28 +45,30 @@ int main(void) {
 		pit_inter_status= PIT_get_interrupt_flag_status(PIT_1);
 		if(1 == pit_inter_status)
 		{
-
 			PIT_clear_interrupt_flag(PIT_1);
 			/*if the passwords are correct the correspondig status flags for the system are enabled, the set
-					 * of this flags is done in the pit1 ISR*/
-				 	 readValue=read_keyboard();
+			 * of this flags is done in the pit1 ISR*/
+			readValue=read_keyboard();
+			if( 0 !=readValue )
+			{
 
+			}
 
-					if( 1 == checkPassword(largoDeClaves,claveMaestra,password_No0,readValue))
-					{
-						rgb_color(RED,TOOGLE);
-					}
+			if( 1 == checkPassword(largoDeClaves,claveMaestra,password_No0,readValue))
+			{
+				rgb_color(RED,TOOGLE);
+			}
 
-					if( 1 == checkPassword(largoDeClaves,claveControlMotor,password_No1,readValue))
-					{
-						rgb_color(GREEN,TOOGLE);
-					}
+			if( 1 == checkPassword(largoDeClaves,claveControlMotor,password_No1,readValue))
+			{
+				rgb_color(GREEN,TOOGLE);
+			}
 
-					if( 1 == checkPassword(largoDeClaves,claveGeneradorDeSenial,password_No2,readValue))
-					{
-						rgb_color(BLUE,TOOGLE);
-					}
-					/*reading pit1 interrupt flag set on his ISR*/
+			if( 1 == checkPassword(largoDeClaves,claveGeneradorDeSenial,password_No2,readValue))
+			{
+				rgb_color(BLUE,TOOGLE);
+			}
+			/*reading pit1 interrupt flag set on his ISR*/
 
 		}
 

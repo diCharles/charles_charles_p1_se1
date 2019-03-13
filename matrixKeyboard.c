@@ -34,7 +34,7 @@
 #define col3 0b1011
 #define col4 0b0111
 
-
+#define lastKEYofPassword 3
 
 typedef struct
 {
@@ -55,7 +55,14 @@ void init_keyboard()
 {
 
 	init_keyboard_pins();//j1 header , 8 pins left part seeing board with SD conector to person
-
+	/*THERE IS A LED CONECTED TO PTDO PIN */
+	/*THIS LED WILL TOOGLE EVERY TIME THE KEYBOARD PRESSED*/
+	/*HELPING DEBUG AND GIVE AID TO USER TO CHECK IF HIS INPUT HAS BEEN PROCESSED*/
+	GPIO_clock_gating(GPIO_D);
+	gpio_pin_control_register_t Pin_PCR_0 = GPIO_MUX1;
+	GPIO_pin_control_register(GPIO_D, 0, &Pin_PCR_0);
+	GPIO_set_pin(GPIO_D, 0);
+	GPIO_data_direction_pin(GPIO_D, GPIO_OUTPUT, 0);
 
 }
 uint8_t read_keyboard()
@@ -284,22 +291,28 @@ uint8_t checkPassword(uint8_t passwordLength, uint8_t *  password,uint8_t Passwo
 	static uint8_t  userCorrectKeyCntr[ supportedPasswords]={0,0,0,0};
 	static uint8_t keyStroke[supportedPasswords]={0,0,0,0};
 
-
+	/*if inputKey is equal to zero no key has been pressed*/
 	if(0 == inputKey)//if no key is being pressed
 	{
 		return 0;
 	}
+	/*otherwise a valid key had been presed, its saved into keystroke array indexed in the corresponding password */
 	 keyStroke[PasswordNumber]=inputKey;
 	uint8_t index=strokeCounter[PasswordNumber];
+	/*if key pressed is correct*/
 	if( password[index] == keyStroke[PasswordNumber])
 	{
 		keyStroke[PasswordNumber]=0;
 		userCorrectKeyCntr[ PasswordNumber]=userCorrectKeyCntr[ PasswordNumber]+1;
 		strokeCounter[ PasswordNumber]=strokeCounter[ PasswordNumber]+1;
-		if(strokeCounter[PasswordNumber] == passwordLength)
+		GPIO_toogle_pin(GPIO_D, 0);
+		/*if the number of correct keys is equal to the length of the password , wich is three
+		 * or the number of correct keys is equal to the password indexed on number of correct keys*/
+		if((userCorrectKeyCntr[ PasswordNumber] > (passwordLength-1) ) || (password[lastKEYofPassword]==userCorrectKeyCntr[ PasswordNumber]))
 		{
 			strokeCounter[ PasswordNumber]=0; //enables for a new try
 			userCorrectKeyCntr[ PasswordNumber]=0;
+
 			return 1;
 		}
 		else
@@ -312,7 +325,12 @@ uint8_t checkPassword(uint8_t passwordLength, uint8_t *  password,uint8_t Passwo
 	{
 		strokeCounter[ PasswordNumber]=0; //enables for a new try
 		userCorrectKeyCntr[ PasswordNumber]=0;
+
 	}
 	return 0 ;
+
+}
+void check3Passwords( uint8_t *loggin1,uint8_t *logging2,uint8_t *loggin3)
+{
 
 }
