@@ -28,3 +28,4 @@ void NVIC_set_basepri_threshold(priority_level_t priority)
 	/**A shift is needed to align in a correct manner the data in priority inside BASEPRI register*/
 	__set_BASEPRI(priority << (8 - __NVIC_PRIO_BITS));
 }
+

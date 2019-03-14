@@ -11,7 +11,7 @@
  */
 #include "MK64F12.h"
 #include "GPIO.h"
-
+#include "switches_k64.h"
 
 
 static gpio_interrupt_flags_t g_intr_status_flag = {0};
