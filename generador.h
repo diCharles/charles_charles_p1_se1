@@ -14,7 +14,7 @@
 
 /*empty state, it does nothing*/
 void gen_idle();
-/*generates with the DAC a 5 hz squres signal*/
+/*generates with the DAC a 5 hz squares signal*/
 void generador_cuadrada();
 
 /* generates with the DAC a 5 hz sinusoidal signal*/
