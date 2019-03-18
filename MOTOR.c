@@ -8,6 +8,7 @@
 
 
 #include "MOTOR.h"
+#include "NVIC.h"
 #include "GPIO.h"
 #include "MK64F12.h"
 #include "switches_k64.h"
@@ -16,55 +17,18 @@
 #include "rgb.h"
 #include "PIT.h"
 
-/*This functions activate the motor and two leds according to the following FSM:
- *
- * Each time the SW2 is pressed, the state is changed. By default State 1 is executed (IDLE)
- *
- *
- *State 1
- *
- *	idle();       ; LED 1 = OFF  ; LED 2 = OFF;
- *State 2
- *
- *  sequence_1(); ; LED 1 = ON   ; LED 2 = OFF ;
- *State 3
- *
- *  sequence_2(); ; LED 1 = OFF  ; LED 2 = ON ;
- *State 4
- *
- *  idle();       ; LED 1 = OFF  ; LED 2 = OFF;
- */
 
-/*Functions to control the motor */
-
-static void sequence_1(void);
-/* Order of execution. Motor is ON or OFF during the time specified.
- *
- * STATE OF MOTOR		TIME
- *       ON				1 s
- *       OFF			1 s
- *       ON				3 s
- *       OFF			1 S
-*/
-static void sequence_2(void);
-/* Order of execution. Motor is ON or OFF during the time specified.
- *
- * STATE OF MOTOR		TIME
- *       ON				4 s
- *       OFF			4 s
- */
-static void idle(void);
-/* Order of execution. Motor OFF.
- *
- * STATE OF MOTOR		TIME
- *       OFF	      unlimited
-*/
 #define NUMBER_OF_STATES 4
 #define L1_ON  1
 #define L1_OFF 0
 #define L2_ON  1
 #define L2_OFF 0
 
+#define SYSTEM_CLOCK (21000000U)  /*Using PIT timer*/
+#define DELAY (1)                 /*Interruption each 1 second*/
+
+
+/*Rotatory states*/
 typedef enum
 {
 	IDLE,
@@ -79,22 +43,210 @@ typedef struct
 	void(*fptr_sequence)(void);
 	uint8_t led1_state;/* this two members are going to be arguments for generador_led  function*/
 	uint8_t led2_state;
-	void (* fptr_led_gen)(uint8_t L1_state,uint8_t L2_state);/*to call generador_led function*/
+	void (* fptr_led_motor)(uint8_t L1_state,uint8_t L2_state);/*to call motor_led function*/
 	uint8_t next[NUMBER_OF_STATES];/*to index next state dependig on sw3 value*/
 
 }state_t;
 
-
-static void sequence_1(void)
+/******************* PUBLIC FUNCTIONS *********************************************/
+void PIT2_init(void)
 {
+	PIT_clock_gating();
+	PIT_enable();
+	//Enabling interrupts for PIT 2
+	NVIC_enable_interrupt_and_priotity(PIT_CH2_IRQ, PRIORITY_10);
+	NVIC_global_enable_interrupts;
+
+	//DELAY value for periodic interruptions of PIT
+	PIT_delay(PIT_0, SYSTEM_CLOCK, DELAY);
+}
+
+void motor_pin_and_leds_init()
+{
+	/*INIT PINS for motor , and leds*/
+	/*motor control pin*/
+	gpio_pin_control_register_t Pin_PCR_11 = GPIO_MUX1;
+	GPIO_pin_control_register(GPIO_B, 11, &Pin_PCR_11);
+	GPIO_clear_pin(GPIO_B, 11);
+	GPIO_data_direction_pin(GPIO_B, GPIO_OUTPUT, 11);
+	/*motor led1 pin */
+	GPIO_clock_gating(GPIO_C);
+	gpio_pin_control_register_t Pin_PCR_c = GPIO_MUX1;
+	GPIO_pin_control_register(GPIO_C, 11, &Pin_PCR_c);
+	GPIO_set_pin(GPIO_C, 11);
+	GPIO_data_direction_pin(GPIO_C, GPIO_OUTPUT, 11);
+	/*motor led2 pin*/
+	GPIO_pin_control_register(GPIO_C, 10, &Pin_PCR_c);
+	GPIO_set_pin(GPIO_C, 10);
+	GPIO_data_direction_pin(GPIO_C, GPIO_OUTPUT, 10);
 
 }
 
-static void sequence_2(void)
+/***************************** PRIVATE FUNCTIONS *******************************************/
+
+void motor_leds(led_status led_1_state,led_status led_2_state)
 {
+	uint8_t both_leds_state = led_1_state | led_2_state;
+
+	switch(both_leds_state)
+	{
+	case 0: //Idling motor
+		GPIO_set_pin(GPIO_C, bit_10);    //LED 1 OFF
+		GPIO_set_pin(GPIO_C, bit_11);    //LED 2 OFF
+	break;
+
+	case 1: //Sequence 2
+		GPIO_set_pin(GPIO_C, bit_10);    //LED 1 OFF
+		GPIO_clear_pin(GPIO_C, bit_11);  //LED 2 ON
+	break;
+
+	case 2: //Sequence 1
+		GPIO_clear_pin(GPIO_C, bit_10);  //LED 1 ON
+		GPIO_set_pin(GPIO_C, bit_11);    //LED 2 OFF
+	break;
+
+	default://Idling motor
+		GPIO_set_pin(GPIO_C, bit_10);    //LED 1 OFF
+		GPIO_set_pin(GPIO_C, bit_11);    //LED 2 OFF
+
+	}/*End of switch case*/
+}/*End of motor_leds()*/
+
+/**********************************Functions to control the motor *************************************/
+
+
+//static void motor_sequence_1(void);
+/* Order of execution. Motor is ON or OFF during the time specified.
+ *
+ * STATE OF MOTOR		TIME
+ *       ON				1 s
+ *       OFF			1 s
+ *       ON				3 s
+ *       OFF			1 S
+*/
+
+//static void motor_sequence_2(void);
+/* Order of execution. Motor is ON or OFF during the time specified.
+ *
+ * STATE OF MOTOR		TIME
+ *       ON				4 s
+ *       OFF			4 s
+ */
+//static void motor_idle(void);
+/* Order of execution. Motor OFF.
+ *
+ * STATE OF MOTOR		TIME
+ *       OFF	      unlimited
+*/
+
+void motor_sequence_1(void)
+{
+	 motor_leds(ON,OFF); //LED 1 ON, LED 2 OFF
+	 static uint8_t pit_event_counter = 0;
+
+	 if(TRUE ==  PIT_get_interrupt_flag_status(PIT_2))
+	 {
+		 pit_event_counter ++;
+		 PIT_clear_interrupt_flag(PIT_2);
+	 }
+
+	 switch(pit_event_counter)
+	 {
+	 	 case 0:
+	 		GPIO_set_pin(GPIO_B, bit_11);
+	 	 break;
+
+	 	 case 1:
+	 		GPIO_clear_pin(GPIO_B, bit_11);
+	 	 break;
+
+	 	 case 2:
+	 		GPIO_set_pin(GPIO_B, bit_11);
+	 	 break;
+
+	 	 case 3:
+	 		GPIO_set_pin(GPIO_B, bit_11);
+	 	 break;
+
+	 	 case 4:
+	 		GPIO_set_pin(GPIO_B, bit_11);
+	 	 break;
+
+	 	 case 5:
+	 		GPIO_clear_pin(GPIO_B, bit_11);
+	 	 break;
+
+	 	 default:
+	 		pit_event_counter = 0;
+
+
+	 }
+
+
 
 }
 
-static void idle(void)
+void motor_sequence_2(void)
 {
+
+	motor_leds(OFF,ON); //LED 1 OFF, LED 2 OFF
+	static uint8_t pit_event_counter = 0;
+
+
+		 if(TRUE ==  PIT_get_interrupt_flag_status(PIT_2))
+		 {
+			 pit_event_counter ++;
+			 PIT_clear_interrupt_flag(PIT_2);
+		 }
+
+		 switch(pit_event_counter)
+		 {
+		 	 case 0:
+		 		GPIO_set_pin(GPIO_B, bit_11);
+		 	 break;
+
+		 	 case 1:
+		 		GPIO_set_pin(GPIO_B, bit_11);
+		 	 break;
+
+		 	 case 2:
+		 		GPIO_set_pin(GPIO_B, bit_11);
+		 	 break;
+
+		 	 case 3:
+		 		GPIO_set_pin(GPIO_B, bit_11);
+		 	 break;
+
+		 	 case 4:
+		 		GPIO_clear_pin(GPIO_B, bit_11);
+		 	 break;
+
+		 	 case 5:
+		 		GPIO_clear_pin(GPIO_B, bit_11);
+		 	 break;
+
+		 	case 6:
+		 		GPIO_clear_pin(GPIO_B, bit_11);
+		    break;
+
+		 	case 7:
+		 		GPIO_clear_pin(GPIO_B, bit_11);
+		 	 break;
+
+		 	 default:
+		 		pit_event_counter = 0;
+
+
+		 }
 }
+
+void motor_idle(void)
+{
+	/*Nothing to do Here for the motor*/
+	motor_leds(OFF,OFF);
+	GPIO_clear_pin(GPIO_B, bit_11);
+}
+
+
+
+
