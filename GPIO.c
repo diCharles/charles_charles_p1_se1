@@ -32,7 +32,13 @@ void PORTA_IRQHandler(void)
 
 	GPIO_clear_interrupt(GPIO_A);
 }
+void PORTD_IRQHandler(void)
+{
 
+	g_intr_status_flag.flag_port_d = TRUE;
+
+	GPIO_clear_interrupt(GPIO_D);
+}
 
 void GPIO_clear_irq_status(gpio_port_name_t gpio)
 {
@@ -40,9 +46,13 @@ void GPIO_clear_irq_status(gpio_port_name_t gpio)
 	{
 		g_intr_status_flag.flag_port_a = FALSE;
 	}
-	else
+	else if (GPIO_C == gpio)
 	{
 		g_intr_status_flag.flag_port_c = FALSE;
+	}
+	else if(GPIO_D == gpio)
+	{
+		g_intr_status_flag.flag_port_d = FALSE;
 	}
 }
 
@@ -54,9 +64,13 @@ uint8_t GPIO_get_irq_status(gpio_port_name_t gpio)
 	{
 		status = g_intr_status_flag.flag_port_a;
 	}
-	else
+	else  if (GPIO_C == gpio)
 	{
 		status = g_intr_status_flag.flag_port_c;
+	}
+	else if(GPIO_D == gpio)
+	{
+		status = g_intr_status_flag.flag_port_d;
 	}
 
 	return(status);

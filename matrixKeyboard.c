@@ -6,14 +6,15 @@
  */
 
 
-/*  keyboard ISR */
+
 #include "matrixKeyboard.h"
 #include "MK64F12.h"
 #include "GPIO.h"
 #include "Bits.h"
+#include "NVIC.h"
 
 
-
+/*set of mask for set_cols function*/
 #define NO_KEY 0b1111
 #define MaskForColumns 0x0F /*used in set_columns_value()*/
 #define	MaskForSetCol_1		(0b0001)
@@ -21,6 +22,7 @@
 #define	MaskForSetCol_3		(0b0100)
 #define	MaskForSetCol_4		(0b1000)
 
+/*defines for  row lecture in read rows function*/
 #define row_1 0
 #define row_2 1
 #define row_3 2
@@ -28,14 +30,23 @@
 
 #define noKEYread 0b0
 
-
+/*defines for column sweep of keyboard*/
 #define col1 0b1110
 #define col2 0b1101
 #define col3 0b1011
 #define col4 0b0111
+/*this array help to index col values for read keyboard function*/
+uint8_t cols[4]={col1, col2, col3 , col4};
+/* defines for every step of mahine keyboard*/
+#define state_1 0
+#define state_2 1
+#define state_3 2
+#define state_4 3
+/*this global variable can help to debun the future the key pressed by keyboard when its posible*/
 
+ uint8_t g_last_key=0;
 
-
+/* machine state implemented for read the keyboard*/
 typedef struct
 {
 
@@ -55,87 +66,65 @@ void init_keyboard()
 {
 
 	init_keyboard_pins();//j1 header , 8 pins left part seeing board with SD conector to person
+	/*THERE IS A LED CONECTED TO PTDO PIN */
+	/*THIS LED WILL TOOGLE EVERY TIME THE KEYBOARD PRESSED*/
+	/*HELPING DEBUG AND GIVE AID TO USER TO CHECK IF HIS INPUT HAS BEEN PROCESSED*/
 
+	/*using interrupt on pin p  coming out from an and GATE wivh inputs are rows of keyboard*/
+	uint32_t input_intr_config = GPIO_MUX1|GPIO_PE|GPIO_PS|INTR_FALLING_EDGE;
+	GPIO_clock_gating(GPIO_D);
+	GPIO_pin_control_register(GPIO_D, bit_0, &input_intr_config);
+	GPIO_data_direction_pin(GPIO_D, GPIO_PIN_INPUT, bit_0);
+	/**Sets the threshold for interrupts, if the interrupt has higher priority constant that the BASEPRI, the interrupt will not be attended*/
+	NVIC_set_basepri_threshold(PRIORITY_10);
+	/**Enables and sets a particular interrupt and its priority*/
+	NVIC_enable_interrupt_and_priotity(PORTD_IRQ,PRIORITY_4);
+	NVIC_global_enable_interrupts;
 
 }
 uint8_t read_keyboard()
 {
-	g_keyboard_machine[0].fptr_set_cols(col1);
-	uint8_t rows_value =g_keyboard_machine[0].fptr_read_rows();
-	uint8_t read=g_keyboard_machine[0].fptr_calculate_key(col1,rows_value);
-	if(0b1111 !=rows_value)
+	uint8_t current_state=state_1;/* the initial state is always state1*/
+
+	/* a sweep of diferent cols value inits and ends when all cols values
+	 * have been set or a key is found, rows_value is diferent that 0b1111 */
+	while(state_4 >= current_state )
 	{
-		if( read!=g_keyboard_machine[0].previousKey)
+		/*the first state of the machine is state zero, a cols value for the state is set */
+		g_keyboard_machine[current_state].fptr_set_cols(cols[current_state]);
+		/* read of rows , is one key its pressed his value will be diferent than 0b1111*/
+		uint8_t rows_value =g_keyboard_machine[current_state].fptr_read_rows();
+		/* if the read of rows is not equal to 1111 then a key has been pressed*/
+		if(0b1111 !=rows_value)
 		{
-			g_keyboard_machine[0].previousKey=read;
-			g_last_key_seen=read;
+
+			/*here a key is found, read variable will be the or of rows value and cols value used to find the key*/
+			uint8_t read=g_keyboard_machine[current_state].fptr_calculate_key(cols[current_state],rows_value);
+			g_last_key=read;/*storing the last key pressed , useful for other functions */
+			/* if the key was not already pressed the function will return its value*/
 			return read;
-		}
-		else
-		{
+			if( read!=g_keyboard_machine[current_state].previousKey)
+			{
+				g_keyboard_machine[current_state].previousKey=read;/* storing the result for the one shot functionality*/
+				g_last_key=read;/*storing the last key pressed , useful for other functions */
+				return read;
+			}
+			else
+			{ /*, but if it was already pressed, the function will ignore it, here is the one_shot functionality */
+				return 0;
+			}
 
-			return 0;
 		}
+		g_keyboard_machine[current_state].previousKey=0;/*no key was pressed*/
+		/* moving machine state, to find the key, it is somewhere :)*/
+		current_state++;
+
 	}
-	g_keyboard_machine[0].previousKey=0;
-
-	g_keyboard_machine[1].fptr_set_cols(col2);
-	rows_value =g_keyboard_machine[1].fptr_read_rows();
-	read=g_keyboard_machine[1].fptr_calculate_key(col2,rows_value);
-	if(0b1111 !=rows_value)
-	{
-		if( read!=g_keyboard_machine[1].previousKey)
-		{
-			g_keyboard_machine[1].previousKey=read;
-			g_last_key_seen=read;
-			return read;
-		}
-		else
-		{
-
-			return 0;
-		}
-	}
-	g_keyboard_machine[1].previousKey=0;
-
-	g_keyboard_machine[2].fptr_set_cols(col3);
-	rows_value =g_keyboard_machine[2].fptr_read_rows();
-	read=g_keyboard_machine[2].fptr_calculate_key(col3,rows_value);
-	if(0b1111 !=rows_value)
-	{
-		if( read!=g_keyboard_machine[2].previousKey)
-		{
-			g_keyboard_machine[2].previousKey=read;
-			g_last_key_seen=read;
-			return read;
-		}
-		else
-		{
-
-			return 0;
-		}
-	}
-	g_keyboard_machine[2].previousKey=0;
-
-	g_keyboard_machine[3].fptr_set_cols(col4);
-	rows_value =g_keyboard_machine[3].fptr_read_rows();
-	read=g_keyboard_machine[3].fptr_calculate_key(col4,rows_value);
-	if(0b1111 !=rows_value)
-	{
-		if( read!=g_keyboard_machine[3].previousKey)
-		{
-			g_keyboard_machine[3].previousKey=read;
-			g_last_key_seen=read;
-			return read;
-		}
-		else
-		{
-
-			return 0;
-		}
-	}
-	g_keyboard_machine[3].previousKey=0;
-
+	/*no key found :(*/
+	g_keyboard_machine[state_1].previousKey=0;
+	g_keyboard_machine[state_2].previousKey=0;
+	g_keyboard_machine[state_3].previousKey=0;
+	g_keyboard_machine[state_4].previousKey=0;
 	return 0;
 
 }
@@ -278,41 +267,14 @@ uint8_t read_rows()
 	}
 	return allRowsValue;
 }
-uint8_t checkPassword(uint8_t passwordLength, uint8_t *  password,uint8_t PasswordNumber,uint8_t inputKey)//non bloquing check password
+
+/* returns keyboard last key pressed*/
+uint8_t get_lastKey()
 {
-	static uint8_t  strokeCounter[supportedPasswords]={0,0,0,0};
-	static uint8_t  userCorrectKeyCntr[ supportedPasswords]={0,0,0,0};
-	static uint8_t keyStroke[supportedPasswords]={0,0,0,0};
-
-
-	if(0 == inputKey)//if no key is being pressed
-	{
-		return 0;
-	}
-	 keyStroke[PasswordNumber]=inputKey;
-	uint8_t index=strokeCounter[PasswordNumber];
-	if( password[index] == keyStroke[PasswordNumber])
-	{
-		keyStroke[PasswordNumber]=0;
-		userCorrectKeyCntr[ PasswordNumber]=userCorrectKeyCntr[ PasswordNumber]+1;
-		strokeCounter[ PasswordNumber]=strokeCounter[ PasswordNumber]+1;
-		if(strokeCounter[PasswordNumber] == passwordLength)
-		{
-			strokeCounter[ PasswordNumber]=0; //enables for a new try
-			userCorrectKeyCntr[ PasswordNumber]=0;
-			return 1;
-		}
-		else
-		{
-
-			return 0;
-		}
-	}
-	else
-	{
-		strokeCounter[ PasswordNumber]=0; //enables for a new try
-		userCorrectKeyCntr[ PasswordNumber]=0;
-	}
-	return 0 ;
-
+	return g_last_key;
+}
+/*clears globlal variable key pressed*/
+void clear_lastKey()
+{
+	g_last_key=0;
 }

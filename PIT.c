@@ -6,13 +6,25 @@ static uint8_t g_pit_1_intr_flag = FALSE;
 static uint8_t g_pit_2_intr_flag = FALSE;
 static uint8_t g_pit_3_intr_flag = FALSE;
 
+ uint8_t g_returnOf_fptrcallBack=0;
+
+ uint8_t (*fptrCallback_PIT0)(void)=0;
+
+ uint8_t get_PIT0_callback_return()
+ {
+	 return g_returnOf_fptrcallBack;
+ }
+void PIT0_callback(uint8_t (*fptr)(void))
+{
+	fptrCallback_PIT0=fptr;
+}
 void PIT0_IRQHandler()
 {
 	volatile uint32_t dummyRead;
 
 	PIT->CHANNEL[0].TFLG |= PIT_TFLG_TIF_MASK;
 	dummyRead = PIT->CHANNEL[0].TCTRL;	//read control register for clear PIT flag, this is silicon bug
-
+	g_returnOf_fptrcallBack=fptrCallback_PIT0();
 
 	g_pit_0_intr_flag = TRUE;
 }
