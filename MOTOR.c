@@ -58,13 +58,14 @@ void PIT2_init(void)
 	NVIC_global_enable_interrupts;
 
 	//DELAY value for periodic interruptions of PIT
-	PIT_delay(PIT_0, SYSTEM_CLOCK, DELAY);
+	PIT_delay(PIT_2, SYSTEM_CLOCK, DELAY);
 }
 
 void motor_pin_and_leds_init()
 {
 	/*INIT PINS for motor , and leds*/
 	/*motor control pin*/
+	GPIO_clock_gating(GPIO_B);
 	gpio_pin_control_register_t Pin_PCR_11 = GPIO_MUX1;
 	GPIO_pin_control_register(GPIO_B, 11, &Pin_PCR_11);
 	GPIO_clear_pin(GPIO_B, 11);

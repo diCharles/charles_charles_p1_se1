@@ -14,6 +14,8 @@
 #include "matrixKeyboard.h"
 #include "rgb.h"
 #include "PIT.h"
+#include "MOTOR.h"
+
 
 #define  largoDeClaves   4//sus unidades son numero de keys
 
@@ -38,46 +40,12 @@ uint8_t g_motor_status =DISABLED_;
 uint8_t g_SgnalGenerator_status=DISABLED_;
 
 int main(void) {
-	/* Init matricial keyboard pins (rosws and cols). */
-	init_keyboard();
-	/* the rgb led on the board is set to show colors*/
-	init_rgb();
-	/*the  pit0 is enabled, on his interrupt is going to check the keyboard and passwords for the system*/
-	set_PIT_timer_with_interrupt(PIT_1,SYSTEM_CLOCK , DELAY_PIT_1,
-			PIT_CH1_IRQ, PRIORITY_11);
-	uint8_t pit_inter_status = FALSE;
-	/* the passwords are checked on the pit0 ISR each 9 ms approximately*/
-	uint8_t readValue=0;
+	PIT2_init();
+	motor_pin_and_leds_init();
 
-	while(1) {
-
-		pit_inter_status= PIT_get_interrupt_flag_status(PIT_1);
-		if(1 == pit_inter_status)
-		{
-
-			PIT_clear_interrupt_flag(PIT_1);
-			/*if the passwords are correct the correspondig status flags for the system are enabled, the set
-					 * of this flags is done in the pit1 ISR*/
-				 	 readValue=read_keyboard();
-
-
-					if( 1 == checkPassword(largoDeClaves,claveMaestra,password_No0,readValue))
-					{
-						rgb_color(RED,TOOGLE);
-					}
-
-					if( 1 == checkPassword(largoDeClaves,claveControlMotor,password_No1,readValue))
-					{
-						rgb_color(GREEN,TOOGLE);
-					}
-
-					if( 1 == checkPassword(largoDeClaves,claveGeneradorDeSenial,password_No2,readValue))
-					{
-						rgb_color(BLUE,TOOGLE);
-					}
-					/*reading pit1 interrupt flag set on his ISR*/
-
-		}
+	while(1)
+	{
+		motor_sequence_2();
 
 
 	}
