@@ -22,12 +22,12 @@ extern uint8_t master_key;
 extern uint8_t motor_enable;
 extern uint8_t gen_enable;
 
-
-
+/*inits pins of FREEDOM k64 for keyboard and interrput for keyboard*/
 void init_keyboard_for_password_check();
+
 /*
  * DESCRPICION DE LA FUNCION checkPassword
- *  param[in]: password legth, longitud de keys del password
+ *  param[in]: password length, longitud de keys del password
  *  param[in]: password apuntador al password, tipicamente se pasa el arreglo por valor
  *  param[in]: passwordNumber hay 4 passwords soportados por la función, hay que indicarle a esta cual revisará
  *
@@ -39,7 +39,13 @@ void init_keyboard_for_password_check();
  *  */
 uint8_t checkPassword(uint8_t passwordLength, uint8_t *  password,uint8_t PasswordNumber,uint8_t inputKey);//non bloquing check password
 
+/* check three passwords in a non blocking operation*/
+void check3Passwords( uint8_t input_key);
 
-uint8_t check3Passwords( uint8_t input_key);
+/*this functions will return access flags for 3 specific process */
+uint8_t get_system_status();
+uint8_t get_motor_status();
+uint8_t get_sgnal_generator_status();
+
 
 #endif /* PASSWORDS_H_ */
