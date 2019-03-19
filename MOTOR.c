@@ -28,41 +28,32 @@
 #define DELAY (1)                 /*Interruption each 1 second*/
 
 
-/*Rotatory states*/
-typedef enum
-{
-	IDLE,
-	SEQUENCE_1,
-	SEQUENCE_2,
-	IDLE_
-}state_name_t;
 
 /*Represents each state atributes*/
-typedef struct
+typedef struct str_state
 {
 	void(*fptr_sequence)(void);
-	uint8_t led1_state;/* this two members are going to be arguments for generador_led  function*/
-	uint8_t led2_state;
-	void (* fptr_led_motor)(uint8_t L1_state,uint8_t L2_state);/*to call motor_led function*/
-	uint8_t next[NUMBER_OF_STATES];/*to index next state dependig on sw3 value*/
+	struct str_state * next;
 
-}state_t;
+}State_t;
+
+
 
 /******************* PUBLIC FUNCTIONS *********************************************/
-void PIT2_init(void)
+void motor_init(void)
 {
 	PIT_clock_gating();
 	PIT_enable();
-	//Enabling interrupts for PIT 2
-	NVIC_enable_interrupt_and_priotity(PIT_CH2_IRQ, PRIORITY_10);
+	/*Enabling interrupts for PIT 2*/
+	NVIC_enable_interrupt_and_priotity(PIT_CH2_IRQ, PRIORITY_8);
 	NVIC_global_enable_interrupts;
+
+	/*Enables interrupt by pressing SW3*/
+	init_sw3(PRIORITY_10,PRIORITY_4,INTR_FALLING_EDGE);
 
 	//DELAY value for periodic interruptions of PIT
 	PIT_delay(PIT_2, SYSTEM_CLOCK, DELAY);
-}
 
-void motor_pin_and_leds_init()
-{
 	/*INIT PINS for motor , and leds*/
 	/*motor control pin*/
 	GPIO_clock_gating(GPIO_B);
@@ -87,7 +78,7 @@ void motor_pin_and_leds_init()
 
 void motor_leds(led_status led_1_state,led_status led_2_state)
 {
-	uint8_t both_leds_state = led_1_state | led_2_state;
+	uint8_t both_leds_state = led_1_state + led_2_state;
 
 	switch(both_leds_state)
 	{
@@ -142,8 +133,11 @@ void motor_leds(led_status led_1_state,led_status led_2_state)
 
 void motor_sequence_1(void)
 {
-	 motor_leds(ON,OFF); //LED 1 ON, LED 2 OFF
+	// motor_leds(ON,OFF); //LED 1 ON, LED 2 OFF
 	 static uint8_t pit_event_counter = 0;
+
+	 GPIO_clear_pin(GPIO_C, bit_10);    //LED 1 ON
+	 GPIO_set_pin(GPIO_C, bit_11);    //LED 2 OFF
 
 	 if(TRUE ==  PIT_get_interrupt_flag_status(PIT_2))
 	 {
@@ -190,55 +184,58 @@ void motor_sequence_1(void)
 void motor_sequence_2(void)
 {
 
-	motor_leds(OFF,ON); //LED 1 OFF, LED 2 OFF
+	//motor_leds(OFF,ON); //LED 1 OFF, LED 2 OFF
 	static uint8_t pit_event_counter = 0;
+	GPIO_set_pin(GPIO_C, bit_10);    //LED 1 OFF
+	GPIO_clear_pin(GPIO_C, bit_11);    //LED 2 ON
 
 
-		 if(TRUE ==  PIT_get_interrupt_flag_status(PIT_2))
-		 {
-			 pit_event_counter ++;
-			 PIT_clear_interrupt_flag(PIT_2);
-		 }
-
-		 switch(pit_event_counter)
-		 {
-		 	 case 0:
-		 		GPIO_set_pin(GPIO_B, bit_11);
-		 	 break;
-
-		 	 case 1:
-		 		GPIO_set_pin(GPIO_B, bit_11);
-		 	 break;
-
-		 	 case 2:
-		 		GPIO_set_pin(GPIO_B, bit_11);
-		 	 break;
-
-		 	 case 3:
-		 		GPIO_set_pin(GPIO_B, bit_11);
-		 	 break;
-
-		 	 case 4:
-		 		GPIO_clear_pin(GPIO_B, bit_11);
-		 	 break;
-
-		 	 case 5:
-		 		GPIO_clear_pin(GPIO_B, bit_11);
-		 	 break;
-
-		 	case 6:
-		 		GPIO_clear_pin(GPIO_B, bit_11);
-		    break;
-
-		 	case 7:
-		 		GPIO_clear_pin(GPIO_B, bit_11);
-		 	 break;
-
-		 	 default:
-		 		pit_event_counter = 0;
+	if(TRUE ==  PIT_get_interrupt_flag_status(PIT_2))
+	{
+		pit_event_counter ++;
+		PIT_clear_interrupt_flag(PIT_2);
+	}
 
 
-		 }
+	switch(pit_event_counter)
+	{
+	case 0:
+		GPIO_set_pin(GPIO_B, bit_11);
+		break;
+
+	case 1:
+		GPIO_set_pin(GPIO_B, bit_11);
+		break;
+
+	case 2:
+		GPIO_set_pin(GPIO_B, bit_11);
+		break;
+
+	case 3:
+		GPIO_set_pin(GPIO_B, bit_11);
+		break;
+
+	case 4:
+		GPIO_clear_pin(GPIO_B, bit_11);
+		break;
+
+	case 5:
+		GPIO_clear_pin(GPIO_B, bit_11);
+		break;
+
+	case 6:
+		GPIO_clear_pin(GPIO_B, bit_11);
+		break;
+
+	case 7:
+		GPIO_clear_pin(GPIO_B, bit_11);
+		break;
+
+	default:
+		pit_event_counter = 0;
+
+
+	}
 }
 
 void motor_idle(void)
@@ -249,5 +246,46 @@ void motor_idle(void)
 }
 
 
+void FSM_motor()
+{
+	/*Creating a Finite State Machin for controlling the motor using a linked list*/
+	static State_t struct_motor_idle; /*IDLE state*/
+	static State_t struct_motor_sequence_1;/*Sequence 1 state*/
+	static State_t struct_motor_sequence_2;/*Sequence 2 state*/
+
+
+
+
+	struct_motor_idle.fptr_sequence = motor_idle;
+	struct_motor_idle.next = &struct_motor_sequence_1;
+
+	struct_motor_sequence_1.fptr_sequence = motor_sequence_1;
+	struct_motor_sequence_1.next = &struct_motor_sequence_2;
+
+	struct_motor_sequence_2.fptr_sequence = motor_sequence_2;
+	struct_motor_sequence_2.next = &struct_motor_idle;
+
+	static State_t * current_state = &struct_motor_idle; /*Current state at the HEAD of the list*/
+
+	/*The press of the SW2 enables the change of state*/
+	if(TRUE == GPIO_get_irq_status(GPIO_A))
+	{
+
+		current_state = current_state->next;
+
+		GPIO_clear_irq_status(GPIO_A);
+	}
+
+	/*Executing the current function to control the motor*/
+	current_state->fptr_sequence();
+	//static void(*function_to_execute)(void);
+	//function_to_exectute = current_state->fptr_sequence;
+
+
+
+
+
+
+}
 
 

@@ -36,17 +36,24 @@ void motor_idle(void);
 
 /*************************************************************************************/
 /* This function enables the use of PIT 2 for controlling the ON/OFF sequence of the motor driver
- *  It's interrupt driven*/
-void PIT2_init(void);
-
-/*************************************************************************************/
-/*Enables GPIO to control pins associated with devide driver:
+*
+*
+*Enables interrut by SW3
+*Enables
+*Enables GPIO to control the following pins associated with devide driver:
 *
 *	PTB11 	pin to control the motor. Power interface required.
 *	PTC11 	pin to control LED 2
 *	PTC10   pin to control LED 1
 */
-void motor_pin_and_leds_init(void);
+void motor_init(void);
 
+/*************************************************************************************/
+/* This function controls the motor.
+*
+*Each time the SW3 is pressed, the motor changes of state.
+*/
+
+void FSM_motor(void);
 
 #endif /* MOTOR_H_ */

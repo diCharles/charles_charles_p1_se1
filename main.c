@@ -17,7 +17,7 @@
 #include "MOTOR.h"
 
 
-#define  largoDeClaves   4//sus unidades son numero de keys
+#define  largoDeClaves   4//sus usernidades son numero de keys
 
 uint8_t claveMaestra[largoDeClaves]= 			{key1,key2,key3,key4};
 uint8_t claveControlMotor[largoDeClaves]=  	{key4,key5,key6,key7};
@@ -39,14 +39,14 @@ uint8_t g_system_status=DISABLED_;
 uint8_t g_motor_status =DISABLED_;
 uint8_t g_SgnalGenerator_status=DISABLED_;
 
-int main(void) {
-	PIT2_init();
-	motor_pin_and_leds_init();
+int main(void)
+{
+
+	motor_init();
 
 	while(1)
 	{
-		motor_sequence_2();
-
+		FSM_motor();
 
 	}
 	return 0 ;
