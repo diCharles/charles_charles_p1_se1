@@ -9,6 +9,11 @@
 #define MATRIXKEYBOARD_H_
 
 #include "MK64F12.h"
+/*binary defines for every keyboard key
+ * note cero is not zero, this defines
+ * are useful the the function read_keyboard
+ * is used, her result can be compared
+ * by any of these*/
 #define key1 0b11101110
 #define key2 0b11101101
 #define key3 0b11101011
@@ -28,44 +33,43 @@
 #define key0 0b01111101
 #define keyHash 0b01111011
 #define keyD 0b01110111
-#define supportedPasswords 4
-
-static uint8_t g_last_key_seen =0;
-/* function check password can onlyy check 4  diferennt passwords, password 4 is not defined yet*/
-#define password_No0 0 /* asigned for claveMaestra*/
-#define password_No1 1 /*asigned for controlMotor*/
-#define password_No2 2/*asigned for generador de senial*/
-#define passwordNo4  3/* user  free asignation*/
-
-/* global status flags for system , by default all characteristics are disabled*/
 
 
+
+
+
+
+/*
+ *  brief this function calls init keyboard pins
+ *  param[in]=void
+ *  param[out ]=void
+ * */
 void init_keyboard();
+
+/*read keyboar by a sweep of four columns
+ * param[out]= 4 bits corresponding to cols and 4 bits to rows, this return can be compared against
+ *  keyX defines to find a key pressed. Also if her return is zero means that no key was pressed */
 uint8_t read_keyboard();
+
+/* brief : Set the four cols pin as output and the four rows pins as output*/
  void init_keyboard_pins();
+
+ /*Brief: set cols making &0F mask to param Value, used by read_keyboard function*/
  void set_columns_value(uint8_t value);
+
+ /*Brief: return 4 bit value of the four rows of the keyboard*/
  uint8_t read_rows();
+
+ /* BRief : simply makes and or between read of  rows and cols  value set for the keyboard sweep
+  * used by read_keyboard function*/
  uint8_t calculate_key(uint8_t cols, uint8_t rows);
 
- /*
-  * DESCRPICION DE LA FUNCION checkPassword
-  *  param[in]: password legth, longitud de keys del password
-  *  param[in]: password apuntador al password, tipicamente se pasa el arreglo por valor
-  *  param[in]: passwordNumber hay 4 passwords soportados por la función, hay que indicarle a esta cual revisará
-  *
-  *  param[out]: 1 si el password ingresado es correcto, 0 si aun no se ha terminado de ingresar o si este es erroneo
-  *
-  *  Nota 1: la funcion checkpassword requiere de llamar primero a la la función read keyboard, antes de cada llamada a esta
-  *  		para adquirir un nuevo key a revisar
-  *  Nota 2:
-  *  */
- uint8_t checkPassword(uint8_t passwordLength, uint8_t *  password,uint8_t PasswordNumber,uint8_t inputKey);//non bloquing check password
+ /* returns keyboard last key pressed*/
+ uint8_t get_lastKey();
+ /*clears globlal variable key pressed*/
+ void clear_lastKey();
 
- /*
-  * Brief: this function checks three passwords with the function checkpassword
-  * param[in] : pointers to access status for each password
-  *
-  * */
- void check3Passwords( uint8_t *loggin1,uint8_t *logging2,uint8_t *loggin3);
+
+
 
 #endif /* MATRIXKEYBOARD_H_ */

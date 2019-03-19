@@ -18,7 +18,11 @@ typedef float My_float_pit_t;
 /*! This enumerated constant are used to select the PIT to be used*/
 typedef enum {PIT_0,PIT_1,PIT_2,PIT_3} PIT_timer_t;
 
+/*this functionis useful for callback of another function in a top layer  in the PIt0 ISR*/
+void PIT0_callback(uint8_t (*fptr)(void));
 
+/*this function is useful to get the callback return*/
+uint8_t get_PIT0_callback_return();
 /********************************************************************************************/
 /********************************************************************************************/
 /********************************************************************************************/
