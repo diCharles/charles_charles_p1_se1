@@ -77,30 +77,31 @@ uint8_t checkPassword(uint8_t passwordLength, uint8_t *  password,uint8_t Passwo
 	return 0 ;
 }
 
-void check3Passwords(uint8_t input_key )
+uint8_t check3Passwords(uint8_t input_key )
 {
 	/*the corresponding flags for each password are going to be toggle when
 	 * the input keystrokes from user match the corresponding password
 	 * given to checkPassword function*/
-
+	uint8_t a_correct_pssword=FALSE;
 	if( PASSWORD_CORRECT == checkPassword(LARGO_DE_CLAVES,claveMaestra,PSSWRD_0,input_key))
 	{   /*the process is enabled or disabled, depending on the anterior flag value*/
 		g_pssWrd_flags.systemON=~g_pssWrd_flags.systemON;
-		//rgb_color(RED,TOOGLE);
+		a_correct_pssword=TRUE;
 	}
 
 	if( PASSWORD_CORRECT == checkPassword(LARGO_DE_CLAVES,claveControlMotor,PSSWRD_1,input_key))
 	{	/*the process is enabled or disabled, depending on the anterior flag value*/
 		g_pssWrd_flags.motorON=~g_pssWrd_flags.motorON;
-		//rgb_color(GREEN,TOOGLE);
+		a_correct_pssword=TRUE;
 	}
 
 	if( PASSWORD_CORRECT == checkPassword(LARGO_DE_CLAVES,claveGeneradorDeSenial,PSSWRD_2,input_key))
 	{
 		g_pssWrd_flags.genON=~g_pssWrd_flags.genON;
-		//rgb_color(BLUE,TOOGLE);
+		a_correct_pssword=TRUE;
 
 	}
+	return a_correct_pssword;
 
 }
 void init_password()

@@ -31,8 +31,8 @@ void init_password();
  *  */
 uint8_t checkPassword(uint8_t passwordLength, uint8_t *  password,uint8_t PasswordNumber,uint8_t inputKey);//non bloquing check password
 
-/* check three passwords in a non blocking operation*/
-void check3Passwords( uint8_t input_key);
+/* check three passwords in a non blocking operation, return 1 when a correct password if found, else return zero*/
+uint8_t check3Passwords( uint8_t input_key);
 
 /* read keyboard ny interrupt and check password*/
 

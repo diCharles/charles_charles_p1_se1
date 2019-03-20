@@ -17,6 +17,7 @@
 #define L1_OFF 0
 #define L2_ON  1
 #define L2_OFF 0
+#define SINUSOIDAL_LUT_VALUES 161
 
 typedef enum{
 		IDLE,
@@ -25,10 +26,53 @@ typedef enum{
 		TRIANGULAR
 
 }state_name_t;
-void gen_idle(){
+/* Values for SINE wave generation*/
+static const uint16_t lut_for_sine[SINUSOIDAL_LUT_VALUES] =
+{
+	2000, 2079, 2157, 2235, 2313, 2390,	2467, 2543, 2618, 2692,	2765, 2837,	2908, 2977,	3045, 3111,
+	3176, 3238,	3299, 3358,	3414, 3469,	3521, 3571,	3618, 3663,	3705, 3745,	3782, 3816,	3848, 3876,
+	3902, 3925,	3945, 3962,	3975, 3986,	3994, 3998,	4000, 3998,	3994, 3986,	3975, 3962,	3945, 3925,
+	3902, 3876,	3848, 3816,	3782, 3745,	3705, 3663,	3618, 3571,	3521, 3469,	3414, 3358,	3299, 3238,
+	3176, 3111,	3045, 2977,	2908, 2837,	2765, 2692,	2618, 2543,	2467, 2390,	2313, 2235,	2157, 2079,
+	2000, 1921,	1843, 1765,	1687, 1610,	1533, 1457,	1382, 1308,	1235, 1163,	1092, 1023,	 955,  889,
+	 824,  762,	 701,  642,	 586,  531,	 479,  429,	 382,  337,	 295,  255,  218,  184,	 152,  124,
+	  98,  	75,	  55, 	38,   25,	14,	   6,	 2,	   0,    2,	   6,	14,   25,   38,	  55, 	75,
+	  98,  124,  152,  184,  218,  255,  295,  337,	 382,  429,  479,  531,  586,  642,  701,  762,
+	 824,  889,  955, 1023, 1092, 1163, 1235, 1308,	1382, 1457, 1533, 1610,	1687, 1765, 1843, 1921,
+	2000
+};
+
+void gen_idle()
+{
+	//does nothing
 }
 void generador_cuadrada(){}
-void generador_senoidal(){}
+void generador_senoidal()
+{
+	static uint16_t sample = 0; //To navigate across the LUT of the sine
+		static int8_t dac_init_flag=0;
+		/*init dac if it havent been initialized*/
+		if( 0 ==dac_init_flag)
+		{
+			SIM->SCGC2 = 0x1000;
+			DAC0->C0 = 0xC0;
+			DAC0->DAT[0].DATL = 0;
+			DAC0->DAT[0].DATH = 0;
+
+
+			dac_init_flag=1;
+		}
+		/* checking LUT indexing overflow*/
+		if(SINUSOIDAL_LUT_VALUES-1 <=sample )
+		{
+			sample =0;
+		}
+		/*increment LUT indexer*/
+		sample++;
+		/*set an output to the DAC*/
+		DAC0->DAT[0].DATL = 0x00FF & lut_for_sine[sample];
+		DAC0->DAT[0].DATH = lut_for_sine[sample]>>8;
+}
 void generador_triangular(){}
 void generador_led(uint8_t l1_state,uint8_t l2_state)
 {
