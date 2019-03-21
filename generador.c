@@ -13,7 +13,7 @@
 #include "switches_k64.h"
 #include "DAC.h"
 #include "PIT.h"
-
+#include "RGB.h"
 
 #define NUMBER_OF_STATES 4
 #define L1_ON  1
@@ -115,7 +115,8 @@ void init_generador_seniales()
 	GPIO_clear_pin(GPIO_D, bit_3);
 	GPIO_data_direction_pin(GPIO_B, GPIO_OUTPUT,bit_3);
 
-	DAC_init();
+	DAC_init(); /*For analog output*/
+	init_rgb(); /*For indicate generator's states*/
 }
 
 
@@ -178,6 +179,11 @@ void generador_cuadrada()
 {
 	static uint16_t square_ctr=0;
 
+	rgb_color(BLUE,ON);
+	rgb_color(GREEN,OFF);
+	rgb_color(RED,OFF);
+
+
 	if(TRUE ==  PIT_get_interrupt_flag_status(PIT_1))
 	{
 		square_ctr++;
@@ -203,6 +209,10 @@ void generador_senoidal()
 {
 	static uint16_t sample = 0; //To navigate across the LUT of the sine
 
+	rgb_color(BLUE,OFF);
+	rgb_color(GREEN,OFF);
+	rgb_color(RED,ON);
+
 	if(TRUE ==  PIT_get_interrupt_flag_status(PIT_1))
 	{
 		/*increment LUT indexer*/
@@ -222,13 +232,19 @@ void generador_senoidal()
 void generador_triangular()
 {
 	static uint16_t sample = 0; //To navigate across the LUT of the sine
-	/* checking LUT indexing overflow*/
+
+	rgb_color(BLUE,OFF);
+	rgb_color(GREEN,ON);
+	rgb_color(RED,OFF);
+
+
 	if(TRUE ==  PIT_get_interrupt_flag_status(PIT_1))
 	{
 		/*increment LUT indexer*/
 		sample++;
 		PIT_clear_interrupt_flag(PIT_1);
 	}
+	/* checking LUT indexing overflow*/
 	if(SINUSOIDAL_LUT_VALUES-1 <=sample )
 	{
 		sample =0;
