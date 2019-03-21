@@ -42,6 +42,9 @@ int main(void) {
 	/*FLAGS FOR RUN PROCESS*/
 	uint8_t run_motor=FALSE;
 	uint8_t run_generator=FALSE;
+	/*flag for stop running the process motor and generator after press A or B and insert corresponding password*/
+	uint8_t stop_motor=FALSE;
+	uint8_t stop_generator =FALSE;
 
 	while(1) {
 
@@ -76,68 +79,97 @@ int main(void) {
 					/*enable for a new keyboard read with debounce with pit*/
 					at_least_2_delays=0;
 					/* generator process is or disabled whenever  key B is pressed*/
-					if(keyB ==read      && (TRUE == get_sgnal_generator_status()) && (TRUE == get_system_status()))
+					if(keyB ==read      && (TRUE == get_sgnal_generator_status()) && (TRUE == get_system_status()) )
 					{
 						/*every time key B is pressed generator activation will be  toggled*/
-						g_activation_by_A_or_B_keys.enable_generator=~g_activation_by_A_or_B_keys.enable_generator;
+						if(FALSE == run_generator)
+						{	/*if the  generator was not running*/
+							g_activation_by_A_or_B_keys.enable_generator=TRUE;
+						}
+						else
+						{//when the motor generator was running
+							g_activation_by_A_or_B_keys.enable_generator=FALSE;/* flag to enable it is cleared*/
+
+						}
 					}
 					else if((keyA ==read) && (TRUE == get_motor_status()) && (TRUE == get_system_status()))
 					{
-						/*every time key A is pressed  motor activation will be  toggled*/
-						g_activation_by_A_or_B_keys.enable_motor=~g_activation_by_A_or_B_keys.enable_motor;
+						if(FALSE == run_motor)
+						{
+							g_activation_by_A_or_B_keys.enable_motor=TRUE;
+
+						}
+						else
+						{
+							g_activation_by_A_or_B_keys.enable_motor=FALSE;
+						}
 					}
 					/*clearing flag for read the keyboard, it must be set again by interrupt on port D*/
 					check_keyboard=FALSE;
 					GPIO_clear_irq_status(GPIO_D);
 					/*the system will be enabled the the password 1234 was ingresed*/
-								if(TRUE == get_system_status())
-								{
-									/* here the system is activated*/
-									rgb_color(RED,ON);/*led indicating activation of system*/
+					if(TRUE == get_system_status())
+					{
+						/* here the system is activated*/
+						rgb_color(RED,ON);/*led indicating activation of system*/
 
-									if(TRUE == get_motor_status())
-									{
+						if(TRUE == get_motor_status())
+						{
 
-										/*here motor is activated but not enabled*/
-										if(TRUE == g_activation_by_A_or_B_keys.enable_motor)
-										{
-											/* motor proccess activated*/
-											rgb_color(GREEN,ON);/*led indicating activation of system*/
-											run_motor=TRUE;
-											//FSM_motor();
-										}
-										else
-										{
-											rgb_color(GREEN,OFF);
-											run_motor=FALSE;
-										}
+							/*here motor is activated but not enabled*/
+							if(TRUE == g_activation_by_A_or_B_keys.enable_motor)
+							{
+								/* motor proccess activated*/
+								rgb_color(GREEN,ON);/*led indicating activation of system*/
+								run_motor=TRUE;
+								//FSM_motor();
+							}
 
 
-									}
+						}
+						else
+						{
+							if(FALSE == g_activation_by_A_or_B_keys.enable_motor)
+							{
+								/* stoping the generator*/
+								rgb_color(GREEN,OFF);
+								run_motor=FALSE;
+
+							}
+						}
 
 
-									if(TRUE == get_sgnal_generator_status())
-									{
-										/* here signal generator is activated but no enabled*/
-										if(TRUE == g_activation_by_A_or_B_keys.enable_generator)
-										{
-											rgb_color(BLUE,ON);/*led indicating activation of system*/
-											//generador_seniales();
-											run_generator=TRUE;
-										}
-										else
-										{
-											rgb_color(BLUE,OFF);
-											run_generator=FALSE;
-										}
-									}
+						if(TRUE == get_sgnal_generator_status() )
+						{
+							/* here signal generator is activated but no enabled*/
+							if(TRUE == g_activation_by_A_or_B_keys.enable_generator)
+							{
+								rgb_color(BLUE,ON);/*led indicating activation of system*/
+								run_generator=TRUE;
+								stop_generator=FALSE;
+							}
 
-								}
-								else
-								{
-									/*the system is disaled here*/
-									rgb_color(RED,OFF);
-								}
+
+						}
+						else
+						{
+							/* here signal generator is activated but no enabled*/
+							if(FALSE == g_activation_by_A_or_B_keys.enable_generator)
+							{
+								/* stoping the generator*/
+								rgb_color(BLUE,OFF);
+								run_generator=FALSE;
+
+							}
+						}
+
+
+					}
+					else
+					{
+						/*the system is disaled here*/
+						rgb_color(RED,OFF);
+					}
 
 				}
 			}
