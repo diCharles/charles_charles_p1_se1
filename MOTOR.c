@@ -58,19 +58,19 @@ void motor_init(void)
 	/*motor control pin*/
 	GPIO_clock_gating(GPIO_B);
 	gpio_pin_control_register_t Pin_PCR_11 = GPIO_MUX1;
-	GPIO_pin_control_register(GPIO_B, 11, &Pin_PCR_11);
-	GPIO_clear_pin(GPIO_B, 11);
-	GPIO_data_direction_pin(GPIO_B, GPIO_OUTPUT, 11);
+	GPIO_pin_control_register(GPIO_B, bit_11, &Pin_PCR_11);
+	GPIO_clear_pin(GPIO_B, bit_11);
+	GPIO_data_direction_pin(GPIO_B, GPIO_OUTPUT, bit_11);
 	/*motor led1 pin */
 	GPIO_clock_gating(GPIO_C);
 	gpio_pin_control_register_t Pin_PCR_c = GPIO_MUX1;
-	GPIO_pin_control_register(GPIO_C, 11, &Pin_PCR_c);
-	GPIO_set_pin(GPIO_C, 11);
-	GPIO_data_direction_pin(GPIO_C, GPIO_OUTPUT, 11);
+	GPIO_pin_control_register(GPIO_C, bit_11, &Pin_PCR_c);
+	GPIO_set_pin(GPIO_C, bit_11);
+	GPIO_data_direction_pin(GPIO_C, GPIO_OUTPUT, bit_11);
 	/*motor led2 pin*/
-	GPIO_pin_control_register(GPIO_C, 10, &Pin_PCR_c);
-	GPIO_set_pin(GPIO_C, 10);
-	GPIO_data_direction_pin(GPIO_C, GPIO_OUTPUT, 10);
+	GPIO_pin_control_register(GPIO_C, bit_10, &Pin_PCR_c);
+	GPIO_set_pin(GPIO_C, bit_10);
+	GPIO_data_direction_pin(GPIO_C, GPIO_OUTPUT, bit_10);
 
 }
 

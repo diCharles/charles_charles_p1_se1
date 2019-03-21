@@ -10,6 +10,7 @@
 #include "generador.h"
 #include "GPIO.h"
 #include "switches_k64.h"
+#include "DAC.h"
 
 
 #define NUMBER_OF_STATES 4
@@ -18,6 +19,12 @@
 #define L2_ON  1
 #define L2_OFF 0
 #define SINUSOIDAL_LUT_VALUES 161
+#define DAC_TOP_VALUE 4000
+#define LIMIT_STEPS_SQUARE_WAVE 4000
+#define DAC_BOTTOM_VALUE 0
+#define PULSE_WIDTH_SQUARE_WAVE 2000
+#define TRIANGULAR_HALF_VALUE 80
+#define TRIANGULAR_END_VALUE 160
 
 typedef enum{
 		IDLE,
@@ -42,91 +49,243 @@ static const uint16_t lut_for_sine[SINUSOIDAL_LUT_VALUES] =
 	2000
 };
 
+static const uint16_t lut_for_triangular[SINUSOIDAL_LUT_VALUES] =
+{
+		   0,
+		  50,
+		 100,
+		 150,
+		 200,
+		 250,
+		 300,
+		 350,
+		 400,
+		 450,
+		 500,
+		 550,
+		 600,
+		 650,
+		 700,
+		 750,
+		 800,
+		 850,
+		 900,
+		 950,
+		1000,
+		1050,
+		1100,
+		1150,
+		1200,
+		1250,
+		1300,
+		1350,
+		1400,
+		1450,
+		1500,
+		1550,
+		1600,
+		1650,
+		1700,
+		1750,
+		1800,
+		1850,
+		1900,
+		1950,
+		2000,
+		2050,
+		2100,
+		2150,
+		2200,
+		2250,
+		2300,
+		2350,
+		2400,
+		2450,
+		2500,
+		2550,
+		2600,
+		2650,
+		2700,
+		2750,
+		2800,
+		2850,
+		2900,
+		2950,
+		3000,
+		3050,
+		3100,
+		3150,
+		3200,
+		3250,
+		3300,
+		3350,
+		3400,
+		3450,
+		3500,
+		3550,
+		3600,
+		3650,
+		3700,
+		3750,
+		3800,
+		3850,
+		3900,
+		3950,
+		4000,
+		3950,
+		3900,
+		3850,
+		3800,
+		3750,
+		3700,
+		3650,
+		3600,
+		3550,
+		3500,
+		3450,
+		3400,
+		3350,
+		3300,
+		3250,
+		3200,
+		3150,
+		3100,
+		3050,
+		3000,
+		2950,
+		2900,
+		2850,
+		2800,
+		2750,
+		2700,
+		2650,
+		2600,
+		2550,
+		2500,
+		2450,
+		2400,
+		2350,
+		2300,
+		2250,
+		2200,
+		2150,
+		2100,
+		2050,
+		2000,
+		1950,
+		1900,
+		1850,
+		1800,
+		1750,
+		1700,
+		1650,
+		1600,
+		1550,
+		1500,
+		1450,
+		1400,
+		1350,
+		1300,
+		1250,
+		1200,
+		1150,
+		1100,
+		1050,
+		1000,
+		 950,
+		 900,
+		 850,
+		 800,
+		 750,
+		 700,
+		 650,
+		 600,
+		 550,
+		 500,
+		 450,
+		 400,
+		 350,
+		 300,
+		 250,
+		 200,
+		 150,
+		 100,
+		  50,
+		   0,
+};
 void gen_idle()
 {
 	//does nothing
 }
-void generador_cuadrada(){
+void generador_cuadrada()
+{
 	static uint16_t square_ctr=0;
-	square_ctr++;
-	if(2000 > square_ctr )
-	{
-	DAC0->DAT[0].DATL = 0xFF;
-	DAC0->DAT[0].DATH = 0xFF;
-	}
-	else
-	{
-		DAC0->DAT[0].DATL = 0x00;
-		DAC0->DAT[0].DATH = 0x00;
-	}
-	if(4000 < square_ctr)
-	{
-		square_ctr=0;
-	}
+		square_ctr++;
+		if(2000 > square_ctr )
+		{
+			integer_to_DAC(DAC_TOP_VALUE);
+		}
+		else
+		{
+			integer_to_DAC(DAC_BOTTOM_VALUE);
+		}
+		if(LIMIT_STEPS_SQUARE_WAVE < square_ctr)
+		{
+			square_ctr=0;
+		}
 }
 void generador_senoidal()
 {
 	static uint16_t sample = 0; //To navigate across the LUT of the sine
-		static int8_t dac_init_flag=0;
-		/*init dac if it havent been initialized*/
-		if( 0 ==dac_init_flag)
-		{
-			SIM->SCGC2 = 0x1000;
-			DAC0->C0 = 0xC0;
-			DAC0->DAT[0].DATL = 0;
-			DAC0->DAT[0].DATH = 0;
 
 
-			dac_init_flag=1;
-		}
-		/* checking LUT indexing overflow*/
-		if(SINUSOIDAL_LUT_VALUES-1 <=sample )
-		{
-			sample =0;
-		}
-		/*increment LUT indexer*/
-		sample++;
-		/*set an output to the DAC*/
-		DAC0->DAT[0].DATL = 0x00FF & lut_for_sine[sample];
-		DAC0->DAT[0].DATH = lut_for_sine[sample]>>8;
+	/* checking LUT indexing overflow*/
+	if(SINUSOIDAL_LUT_VALUES-1 <=sample )
+	{
+		sample =0;
+	}
+	/*increment LUT indexer*/
+	sample++;
+	integer_to_DAC(lut_for_sine[sample]);
 }
+
+
 void generador_triangular()
 {
-	static int16_t triangular=0;
-	if(4000 > triangular)
+	static uint16_t sample = 0; //To navigate across the LUT of the sine
+
+	/* checking LUT indexing overflow*/
+	if(SINUSOIDAL_LUT_VALUES-1 <=sample )
 	{
-		DAC0->DAT[0].DATL = 0x00FF & triangular;
-		DAC0->DAT[0].DATH = triangular>>8;
-		triangular++;
+		sample =0;
 	}
-	else
-	{
-		triangular=0;
-	}
+	/*increment LUT indexer*/
+	sample++;
+	integer_to_DAC(lut_for_triangular[sample]);
 }
 void generador_led(uint8_t l1_state,uint8_t l2_state)
 {
 	if(1 == l1_state)
 	{
 		/*set led l1*/
-		GPIO_set_pin(GPIO_D, 1);
+		GPIO_set_pin(GPIO_D, bit_1);
 
 	}
 	else
 	{
 		/*clear led l1*/
-		GPIO_clear_pin(GPIO_D, 1);
+		GPIO_clear_pin(GPIO_D, bit_1);
 	}
 	if(1 == l1_state)
 	{
 		/* set led l2*/
-		GPIO_clear_pin(GPIO_D, 3);
+		GPIO_clear_pin(GPIO_D, bit_3);
 
 	}
 	else
 	{
 		/*clear led l2*/
-		GPIO_set_pin(GPIO_D, 1);
+		GPIO_set_pin(GPIO_D, bit_1);
 	}
 
 }
@@ -158,21 +317,19 @@ void init_generador_seniales()
 	/*init led 1*/
 	GPIO_clock_gating(GPIO_D);
 	gpio_pin_control_register_t Pin_PCR_1 = GPIO_MUX1;
-	GPIO_pin_control_register(GPIO_D, 1, &Pin_PCR_1);
-	GPIO_clear_pin(GPIO_D, 1);
-	GPIO_data_direction_pin(GPIO_B, GPIO_OUTPUT, 22);
+	GPIO_pin_control_register(GPIO_D, bit_1, &Pin_PCR_1);
+	GPIO_clear_pin(GPIO_D, bit_1);
+	GPIO_data_direction_pin(GPIO_B, GPIO_OUTPUT, bit_22);
 
 	/*init led 3*/
 	GPIO_clock_gating(GPIO_D);
 	gpio_pin_control_register_t Pin_PCR_3 = GPIO_MUX1;
-	GPIO_pin_control_register(GPIO_D, 3, &Pin_PCR_3);
-	GPIO_clear_pin(GPIO_D, 3);
-	GPIO_data_direction_pin(GPIO_B, GPIO_OUTPUT,3);
+	GPIO_pin_control_register(GPIO_D, bit_3, &Pin_PCR_3);
+	GPIO_clear_pin(GPIO_D, bit_3);
+	GPIO_data_direction_pin(GPIO_B, GPIO_OUTPUT,bit_3);
 
-	SIM->SCGC2 = 0x1000;
-	DAC0->C0 = 0xC0;
-	DAC0->DAT[0].DATL = 0;
-	DAC0->DAT[0].DATH = 0;
+	DAC_init();
+
 
 }
 void generador_seniales()
@@ -187,7 +344,11 @@ void generador_seniales()
 
 	}
 	/*very important to check overflow*/
-	if( 4 <=sw3_counter){sw3_counter=0;}
+	if( NUMBER_OF_STATES <=sw3_counter)
+	{
+		sw3_counter = 0;
+	}
+
 	current_state=sw3_counter;				/*here the current state of machine changes*/
 	/*generating current state signal*/
 	gen_FSM[current_state].fptr_signal_to_gen();
