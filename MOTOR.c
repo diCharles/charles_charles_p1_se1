@@ -48,7 +48,7 @@ void motor_init(void)
 	NVIC_enable_interrupt_and_priotity(PIT_CH2_IRQ, PRIORITY_8);
 	NVIC_global_enable_interrupts;
 
-	/*Enables interrupt by pressing SW3*/
+	/*Enables interrupt by pressing SW2*/
 	init_sw2(PRIORITY_10,PRIORITY_4,INTR_FALLING_EDGE);
 
 	//DELAY value for periodic interruptions of PIT
