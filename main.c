@@ -17,7 +17,7 @@
 
 typedef struct{
 	uint8_t enable_motor:1;
-uint8_t enable_generator:1;
+	uint8_t enable_generator:1;
 }flags_t;
 
 flags_t g_activation_by_A_or_B_keys;
@@ -37,11 +37,14 @@ int main(void) {
 	init_generador_seniales();
 	/*initialization of motor*/
 	motor_init();
-
+	/*set all cols in zero enables for a interrupt by any keyboard key*/
+	set_columns_value(0);
+	/*FLAGS FOR RUN PROCESS*/
+	uint8_t run_motor=FALSE;
+	uint8_t run_generator=FALSE;
 
 	while(1) {
-		/*set all cols in zero enables for a interrupt by any keyboard key*/
-		set_columns_value(0);
+
 		/*if any key is pressed he and gate will be zero, the and interrupt on pin PD0 is launched*/
 		if(TRUE == GPIO_get_irq_status(GPIO_D))
 		{
@@ -64,6 +67,8 @@ int main(void) {
 				{
 					/*two delays for the pit already pass,lets read the keyboard*/
 					uint8_t read =read_keyboard();
+					/*set all cols in zero enables for a interrupt by any keyboard key*/
+					set_columns_value(0);
 					/*here the 3 passwords are checked reading the last key pressed by user */
 					a_correct_password =check3Passwords(get_lastKey() );/*if correct password appears his signal will be stort*/
 					/*the key has been processed, its time to clean it*/
@@ -84,58 +89,73 @@ int main(void) {
 					/*clearing flag for read the keyboard, it must be set again by interrupt on port D*/
 					check_keyboard=FALSE;
 					GPIO_clear_irq_status(GPIO_D);
+					/*the system will be enabled the the password 1234 was ingresed*/
+								if(TRUE == get_system_status())
+								{
+									/* here the system is activated*/
+									rgb_color(RED,ON);/*led indicating activation of system*/
+
+									if(TRUE == get_motor_status())
+									{
+
+										/*here motor is activated but not enabled*/
+										if(TRUE == g_activation_by_A_or_B_keys.enable_motor)
+										{
+											/* motor proccess activated*/
+											rgb_color(GREEN,ON);/*led indicating activation of system*/
+											run_motor=TRUE;
+											//FSM_motor();
+										}
+										else
+										{
+											rgb_color(GREEN,OFF);
+											run_motor=FALSE;
+										}
+
+
+									}
+
+
+									if(TRUE == get_sgnal_generator_status())
+									{
+										/* here signal generator is activated but no enabled*/
+										if(TRUE == g_activation_by_A_or_B_keys.enable_generator)
+										{
+											rgb_color(BLUE,ON);/*led indicating activation of system*/
+											//generador_seniales();
+											run_generator=TRUE;
+										}
+										else
+										{
+											rgb_color(BLUE,OFF);
+											run_generator=FALSE;
+										}
+									}
+
+								}
+								else
+								{
+									/*the system is disaled here*/
+									rgb_color(RED,OFF);
+								}
+
 				}
 			}
 
 			PIT_clear_interrupt_flag(PIT_3);
 		}
 
-		/*the system will be enabled the the password 1234 was ingresed*/
-		if(TRUE == get_system_status())
+
+
+
+		if( TRUE ==run_generator)
 		{
-			/* here the system is activated*/
-			rgb_color(RED,ON);/*led indicating activation of system*/
-
-			if(TRUE == get_motor_status())
-			{
-
-				/*here motor is activated but not enabled*/
-				if(TRUE == g_activation_by_A_or_B_keys.enable_motor)
-				{
-					/* motor proccess activated*/
-					rgb_color(GREEN,ON);/*led indicating activation of system*/
-					FSM_motor();
-				}
-				else
-				{
-					rgb_color(GREEN,OFF);
-				}
-
-
-			}
-
-
-			if(TRUE == get_sgnal_generator_status())
-			{
-				/* here signal generator is activated but no enabled*/
-				if(TRUE == g_activation_by_A_or_B_keys.enable_generator)
-				{
-					rgb_color(BLUE,ON);/*led indicating activation of system*/
-					generador_seniales();
-				}
-				else
-				{
-					rgb_color(BLUE,OFF);
-				}
-			}
-
+			generador_seniales();
 		}
-		else
+		if(TRUE == run_motor)
 		{
-			/*the system is disaled here*/
-			rgb_color(RED,OFF);
+			FSM_motor();
 		}
-
 
 	}
 	return 0 ;
