@@ -46,7 +46,24 @@ void gen_idle()
 {
 	//does nothing
 }
-void generador_cuadrada(){}
+void generador_cuadrada(){
+	static uint16_t square_ctr=0;
+	square_ctr++;
+	if(2000 > square_ctr )
+	{
+	DAC0->DAT[0].DATL = 0xFF;
+	DAC0->DAT[0].DATH = 0xFF;
+	}
+	else
+	{
+		DAC0->DAT[0].DATL = 0x00;
+		DAC0->DAT[0].DATH = 0x00;
+	}
+	if(4000 < square_ctr)
+	{
+		square_ctr=0;
+	}
+}
 void generador_senoidal()
 {
 	static uint16_t sample = 0; //To navigate across the LUT of the sine
@@ -73,7 +90,20 @@ void generador_senoidal()
 		DAC0->DAT[0].DATL = 0x00FF & lut_for_sine[sample];
 		DAC0->DAT[0].DATH = lut_for_sine[sample]>>8;
 }
-void generador_triangular(){}
+void generador_triangular()
+{
+	static int16_t triangular=0;
+	if(4000 > triangular)
+	{
+		DAC0->DAT[0].DATL = 0x00FF & triangular;
+		DAC0->DAT[0].DATH = triangular>>8;
+		triangular++;
+	}
+	else
+	{
+		triangular=0;
+	}
+}
 void generador_led(uint8_t l1_state,uint8_t l2_state)
 {
 	if(1 == l1_state)
@@ -139,6 +169,10 @@ void init_generador_seniales()
 	GPIO_clear_pin(GPIO_D, 3);
 	GPIO_data_direction_pin(GPIO_B, GPIO_OUTPUT,3);
 
+	SIM->SCGC2 = 0x1000;
+	DAC0->C0 = 0xC0;
+	DAC0->DAT[0].DATL = 0;
+	DAC0->DAT[0].DATH = 0;
 
 }
 void generador_seniales()

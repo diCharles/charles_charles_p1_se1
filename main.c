@@ -65,7 +65,7 @@ int main(void) {
 					/*two delays for the pit already pass,lets read the keyboard*/
 					uint8_t read =read_keyboard();
 					/*here the 3 passwords are checked reading the last key pressed by user */
-					a_correct_password =check3Passwords(get_lastKey() );/*if correct password appears his signal will be stored*/
+					a_correct_password =check3Passwords(get_lastKey() );/*if correct password appears his signal will be stort*/
 					/*the key has been processed, its time to clean it*/
 					clear_lastKey();
 					/*enable for a new keyboard read with debounce with pit*/

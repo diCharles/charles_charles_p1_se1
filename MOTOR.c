@@ -49,7 +49,7 @@ void motor_init(void)
 	NVIC_global_enable_interrupts;
 
 	/*Enables interrupt by pressing SW3*/
-	init_sw3(PRIORITY_10,PRIORITY_4,INTR_FALLING_EDGE);
+	init_sw2(PRIORITY_10,PRIORITY_4,INTR_FALLING_EDGE);
 
 	//DELAY value for periodic interruptions of PIT
 	PIT_delay(PIT_2, SYSTEM_CLOCK, DELAY);
@@ -268,19 +268,18 @@ void FSM_motor()
 	static State_t * current_state = &struct_motor_idle; /*Current state at the HEAD of the list*/
 
 	/*The press of the SW2 enables the change of state*/
-	if(TRUE == GPIO_get_irq_status(GPIO_A))
+	if(TRUE == GPIO_get_irq_status(GPIO_C))
 	{
 
 		current_state = current_state->next;
 
-		GPIO_clear_irq_status(GPIO_A);
+		GPIO_clear_irq_status(GPIO_C);
 	}
 
 	/*Executing the current function to control the motor*/
 	current_state->fptr_sequence();
 	//static void(*function_to_execute)(void);
 	//function_to_exectute = current_state->fptr_sequence;
-
 
 
 
