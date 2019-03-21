@@ -22,15 +22,15 @@ typedef struct{
 
 void system_control();
 /*FLAGS FOR RUN PROCESS*/
-	uint8_t g_run_motor=FALSE;
-	uint8_t g_run_generator=FALSE;
-	/*flag for stop running the process motor and generator after press A or B and insert corresponding password*/
-	uint8_t g_stop_motor=FALSE;
-	uint8_t g_stop_generator =FALSE;
-	/*this flag will be set everytime a password correct is found*/
-	uint8_t g_a_correct_password = FALSE;
-	/* the passwords are checked on the pit3 flag each 200ms aproximately*/
-	static uint8_t g_check_keyboard = FALSE;
+uint8_t g_run_motor=FALSE;
+uint8_t g_run_generator=FALSE;
+/*flag for stop running the process motor and generator after press A or B and insert corresponding password*/
+uint8_t g_stop_motor=FALSE;
+uint8_t g_stop_generator =FALSE;
+/*this flag will be set everytime a password correct is found*/
+uint8_t g_a_correct_password = FALSE;
+/* the passwords are checked on the pit3 flag each 200ms aproximately*/
+static uint8_t g_check_keyboard = FALSE;
 
 flags_t g_activation_by_A_or_B_keys;
 int main(void) {
@@ -54,7 +54,7 @@ int main(void) {
 	while(1) {
 
 
-		 system_control();
+		system_control();
 
 
 		if( TRUE ==g_run_generator)
@@ -71,6 +71,9 @@ int main(void) {
 }
 void system_control()
 {
+	/*flags for password LEDs*/
+	static uint8_t turn_on_green_LED=FALSE;
+	static uint8_t turn_on_red_LED=FALSE;
 
 	/*if any key is pressed he and gate will be zero, the and interrupt on pin PD0 is launched*/
 	if(TRUE == GPIO_get_irq_status(GPIO_D))
@@ -100,6 +103,7 @@ void system_control()
 				g_a_correct_password =check3Passwords(get_lastKey() );/*if correct password appears his signal will be stort*/
 				/*the key has been processed, its time to clean it*/
 				clear_lastKey();
+
 				/*enable for a new keyboard read with debounce with pit*/
 				at_least_2_delays=0;
 				/* generator process is or disabled whenever  key B is pressed*/
