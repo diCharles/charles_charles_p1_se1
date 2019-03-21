@@ -183,13 +183,14 @@ void generador_cuadrada()
 		square_ctr++;
 		PIT_clear_interrupt_flag(PIT_1);
 	}
-
+	/*High part of square wave*/
 	if(SQUARE_PULSE_HIGH_WITDH > square_ctr )
 	{
 		integer_to_DAC(DAC_TOP_VALUE);
 	}
 	else
 	{
+		/*Low part of square wave*/
 		integer_to_DAC(DAC_BOTTOM_VALUE);
 	}
 	if(SQUARE_PULSE_LOW_WITDH < square_ctr)
